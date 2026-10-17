@@ -8,7 +8,7 @@ import java.nio.file.StandardCopyOption;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.inventory.GuiInventory;
-import net.minecraft.client.multiplayer.GuiConnecting;
+import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -21,6 +21,7 @@ import com.miaokatze.gtfi.GTFunnyIdea;
 import com.miaokatze.gtfi.network.GtfiNetwork;
 import com.miaokatze.gtfi.register.ModContent;
 
+import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
@@ -61,12 +62,14 @@ public final class ClientSmoke {
                     mc.currentScreen.getClass()
                         .getName())))) {
                 connected = true;
-                mc.displayGuiScreen(
-                    new GuiConnecting(
-                        new GuiMainMenu(),
-                        mc,
-                        System.getProperty("gtfi.clientSmoke.host", "127.0.0.1"),
-                        Integer.getInteger("gtfi.clientSmoke.port", 25676)));
+                FMLClientHandler handler = FMLClientHandler.instance();
+                handler.setupServerList();
+                handler.connectToServer(
+                    new GuiMainMenu(),
+                    new ServerData(
+                        "GTFI isolated smoke",
+                        System.getProperty("gtfi.clientSmoke.host", "127.0.0.1") + ":"
+                            + Integer.getInteger("gtfi.clientSmoke.port", 25676)));
             }
             if (mc.thePlayer == null || mc.theWorld == null) return;
             ticks++;
