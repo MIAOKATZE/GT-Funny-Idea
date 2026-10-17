@@ -215,7 +215,6 @@ public final class ClientSmoke {
             if (requireMui && !screen.contains("modularui")) {
                 throw new IllegalStateException("Expected server MUI screen for " + capture + ", got " + screen);
             }
-            if ("01-gold-quantum-node".equals(capture)) verifyPlacedBlock();
             output.mkdirs();
             String filename = "gtfi-" + capture + ".png";
             ScreenShotHelper
@@ -243,7 +242,10 @@ public final class ClientSmoke {
                     + mc.thePlayer.rotationPitch
                     + "\nheld="
                     + mc.thePlayer.getHeldItem()
+                    + "\n"
+                    + placedBlockDiagnostics()
                     + "\n").getBytes(StandardCharsets.UTF_8));
+            if ("01-gold-quantum-node".equals(capture)) verifyPlacedBlock();
             GTFunnyIdea.LOG.info("[GTFI-CLIENT-SMOKE] CAPTURE {} screen={}", capture, screen);
             capture = null;
         } catch (Exception error) {
@@ -253,7 +255,7 @@ public final class ClientSmoke {
 
     private void verifyPlacedBlock() {
         Minecraft mc = Minecraft.getMinecraft();
-        MovingObjectPosition hit = mc.objectMouseOver;
+        MovingObjectPosition hit = mc.thePlayer.rayTrace(6, 1);
         if (mc.theWorld.getBlock(-4, 65, 0) != ModContent.WARP_EJECTOR
             || !(mc.theWorld.getTileEntity(-4, 65, 0) instanceof TileWarpEjector)
             || hit == null
@@ -265,8 +267,36 @@ public final class ClientSmoke {
             || mc.thePlayer.getHeldItem()
                 .getItem() != Item.getItemFromBlock(ModContent.WARP_EJECTOR)) {
             throw new IllegalStateException(
-                "Expected placed ejector Block/Tile at (-4,65,0), crosshair hit and selected block item");
+                "Expected placed ejector Block/Tile at (-4,65,0), fresh native camera ray and selected block item: "
+                    + placedBlockDiagnostics());
         }
+    }
+
+    private String placedBlockDiagnostics() {
+        Minecraft mc = Minecraft.getMinecraft();
+        Object tile = mc.theWorld.getTileEntity(-4, 65, 0);
+        return "block=" + mc.theWorld.getBlock(-4, 65, 0)
+            .getClass()
+            .getName()
+            + "\nblockIsExpected="
+            + (mc.theWorld.getBlock(-4, 65, 0) == ModContent.WARP_EJECTOR)
+            + "\ntile="
+            + (tile == null ? "null"
+                : tile.getClass()
+                    .getName())
+            + "\ntileIsExpected="
+            + (tile instanceof TileWarpEjector)
+            + "\nheldIsBlock="
+            + (mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem()
+                .getItem() == Item.getItemFromBlock(ModContent.WARP_EJECTOR))
+            + "\ncachedHit="
+            + describeHit(mc.objectMouseOver)
+            + "\nfreshNativeHit="
+            + describeHit(mc.thePlayer.rayTrace(6, 1));
+    }
+
+    private String describeHit(MovingObjectPosition hit) {
+        return hit == null ? "null" : hit.typeOfHit + "," + hit.blockX + "," + hit.blockY + "," + hit.blockZ;
     }
 
     private PanelSyncManager nativeSync() {
