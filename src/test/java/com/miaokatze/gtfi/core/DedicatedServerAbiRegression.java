@@ -26,19 +26,25 @@ public final class DedicatedServerAbiRegression {
                 .forEach(files::add);
         }
         int inspected = 0;
+        int visibilityInspected = 0;
         for (Path file : files) {
             String relative = classes.relativize(file)
                 .toString()
                 .replace('\\', '/');
-            if (relative.contains("/client/") || relative.endsWith("/ClientProxy.class")) continue;
-            verify(Files.readAllBytes(file), relative);
-            inspected++;
+            boolean common = !relative.contains("/client/") && !relative.endsWith("/ClientProxy.class");
+            verify(Files.readAllBytes(file), relative, common);
+            visibilityInspected++;
+            if (common) inspected++;
         }
         if (inspected == 0) throw new AssertionError("No common/server classes inspected");
-        System.out.println("DedicatedServerAbiRegression: " + inspected + " common/server classes passed");
+        System.out.println(
+            "DedicatedServerAbiRegression: " + inspected
+                + " common/server ABI checks and "
+                + visibilityInspected
+                + " main class event-handler visibility checks passed");
     }
 
-    private static void verify(byte[] bytes, String label) throws IOException {
+    private static void verify(byte[] bytes, String label, boolean checkServerApis) throws IOException {
         DataInputStream input = new DataInputStream(new ByteArrayInputStream(bytes));
         if (input.readInt() != 0xCAFEBABE) throw new AssertionError("Invalid class: " + label);
         input.readUnsignedShort();
@@ -85,6 +91,16 @@ public final class DedicatedServerAbiRegression {
                     throw new AssertionError("Unexpected constant pool tag " + tag + " in " + label);
             }
         }
+        int accessFlags = input.readUnsignedShort();
+        for (int index = 1; index < count; index++) {
+            if (tags[index] == 1 && "Lcpw/mods/fml/common/eventhandler/SubscribeEvent;".equals(pool[index])
+                && (accessFlags & 0x0001) == 0) {
+                throw new AssertionError(
+                    label + " declares @SubscribeEvent on a non-public class; "
+                        + "FML ASMEventHandler cannot invoke it across class loaders");
+            }
+        }
+        if (!checkServerApis) return;
         for (int index = 1; index < count; index++) {
             if (tags[index] == 7) {
                 String owner = (String) pool[(Integer) pool[index]];

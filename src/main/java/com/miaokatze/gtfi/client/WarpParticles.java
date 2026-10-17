@@ -18,7 +18,7 @@ import com.miaokatze.gtfi.network.VisualMessage;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 /** Bounded, texture-free voxel sparks. One mesh batch per pass, independent of optional mods. */
-final class WarpParticles {
+public final class WarpParticles {
 
     private static final int LIMIT = 768;
     private final List<Spark> sparks = new ArrayList<Spark>();

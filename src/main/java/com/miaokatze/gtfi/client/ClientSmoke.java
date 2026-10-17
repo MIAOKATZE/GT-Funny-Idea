@@ -26,7 +26,7 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 
 /** Explicit opt-in fixture: ordinary client packets, real server windows and framebuffer captures. */
-final class ClientSmoke {
+public final class ClientSmoke {
 
     private final File output = new File(System.getProperty("gtfi.clientSmoke.output", "gtfi-client-smoke"));
     private final long installedAt = System.nanoTime();
