@@ -216,10 +216,11 @@ public final class WarpService {
         if (player.ridingEntity != null) player.mountEntity(null);
         Flight previous = flights.remove(player.getUniqueID());
         if (previous != null) restoreFlight(player, previous);
-        double dx = player.posX - source.x;
-        double dy = player.posY - source.y;
-        double dz = player.posZ - source.z;
-        double distance = Math.sqrt(player.getDistanceSq(source.x, source.y, source.z));
+        AxisAlignedBB body = player.boundingBox;
+        double dx = (body.minX + body.maxX) * 0.5 - source.x;
+        double dy = (body.minY + body.maxY) * 0.5 - source.y;
+        double dz = (body.minZ + body.maxZ) * 0.5 - source.z;
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
         double length = distance;
         if (length < 1.0E-6) {
             dx = 0;

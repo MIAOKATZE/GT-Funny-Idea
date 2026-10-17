@@ -330,7 +330,8 @@ public final class TestScenarios {
             }
 
             public boolean tick(Context c, int t) {
-                c.offer(SOURCE_IDS[0], c.first);
+                // Tile center sits above the player's feet; the force must use the player's body center.
+                WarpService.INSTANCE.offerSource(SOURCE_IDS[0], c.world, -2, 65.5, 0.5, c.first);
                 if (WarpService.INSTANCE.isFlying(c.owner) && c.mark == 0) {
                     c.mark = t;
                     c.measured = WarpService.INSTANCE.getSpeedMetersPerSecond(c.owner);
@@ -340,6 +341,8 @@ public final class TestScenarios {
                         100,
                         "launch starts exact five second cooldown");
                 }
+                if (c.mark > 0 && t == c.mark + 1)
+                    c.check(c.owner.posY > 65, "grounded actor rises away from source at tile center height");
                 if (c.mark > 0 && t == c.mark + 2) {
                     c.check(c.owner.impacts == 1, "production collision requests creative impact damage");
                     c.near(
@@ -406,6 +409,8 @@ public final class TestScenarios {
                     "target outside three metre reach rejected");
                 c.target.setPosition(0, 65, 2);
                 c.world.setBlock(0, 66, 1, Blocks.stone, 0, 3);
+                // Yaw zero has a tiny negative X component; cover both sides of the x=0 fixture boundary.
+                c.world.setBlock(-1, 66, 1, Blocks.stone, 0, 3);
                 c.check(TransferService.INSTANCE.findTarget(c.owner) == null, "solid wall blocks transfer ray");
                 return true;
             }
