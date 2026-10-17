@@ -5,7 +5,7 @@
       "modid": "${modId}",
       "name": "${modName}",
       "description": "Warp experiments and unusual tools for GregTech: New Horizons.",
-      "version": "${modVersion}",
+      "version": "@GTFI_TAG_VERSION@",
       "mcversion": "${minecraftVersion}",
       "url": "https://github.com/MIAOKATZE/GT-Funny-Idea",
       "authorList": ["miaokatze"],

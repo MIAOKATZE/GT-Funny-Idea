@@ -181,7 +181,7 @@ public final class TestScenarios {
                 c.near(EjectorSettings.blockDefaults().damageFactor, 1, 0, "default damage factor is one");
                 c.eq(EjectorSettings.blockDefaults().threshold, 25, "default threshold is 25");
                 c.eq(EjectorSettings.blockDefaults().countdownSeconds, 20, "default block countdown is twenty seconds");
-                c.near(block.power, 1, 0, "nonfinite block power rejected");
+                c.near(block.power, 0.01, 0, "nonfinite block power rejected");
                 c.near(block.damageFactor, 1, 0, "damage factor upper bound");
                 c.eq(block.countdownSeconds, 15, "normal block countdown lower bound is fifteen seconds");
                 c.eq(
@@ -190,7 +190,7 @@ public final class TestScenarios {
                     "safeMode block countdown lower bound");
                 EjectorSettings portable = EjectorSettings.read(bad, true, false);
                 c.near(portable.range, 5, 0, "portable range lower bound");
-                c.near(portable.power, 0.1, 0, "portable power lower bound");
+                c.near(portable.power, 0.001, 0, "portable power lower bound");
                 c.eq(portable.countdownSeconds, 5, "portable countdown lower bound");
                 bad.setDouble("range", 9999);
                 bad.setDouble("power", 99999);
@@ -251,6 +251,50 @@ public final class TestScenarios {
                 if (t == 12) {
                     c.eq(WarpService.INSTANCE.getCountdownTicks(c.owner), -1, "ward cancels an active countdown");
                     c.check(!WarpService.INSTANCE.isFlying(c.owner), "ward never launches actor");
+                    return true;
+                }
+                return false;
+            }
+        }, new Case("countdown.portable_carrier_exclusion") {
+
+            public void start(Context c) {
+                c.owner.setPosition(0, 65, 0);
+                c.warp(c.owner, WarpType.TEMP, 100);
+                c.warp(c.target, WarpType.TEMP, 100);
+                c.target.setPosition(2, 65, 0);
+                c.first = EjectorSettings.portableDefaults();
+                c.second = EjectorSettings.blockDefaults();
+            }
+
+            public boolean tick(Context c, int t) {
+                WarpService.INSTANCE.offerSource(SOURCE_IDS[0], c.world, 0, 65, 0, c.first, c.owner.getUniqueID());
+                if (t >= 5 && t <= 8)
+                    WarpService.INSTANCE.offerSource(SOURCE_IDS[1], c.world, 2, 65, 0, c.first, c.target.getUniqueID());
+                if (t == 4) {
+                    c.eq(WarpService.INSTANCE.getCountdownTicks(c.owner), -1, "portable source excludes its carrier");
+                    c.mark = WarpService.INSTANCE.getCountdownTicks(c.target);
+                    c.check(c.mark > 0, "portable source still detects another nearby player");
+                }
+                if (t == 8) {
+                    c.check(
+                        WarpService.INSTANCE.getCountdownTicks(c.owner) > 0,
+                        "carrier is still affected by another player's portable source");
+                    c.eq(
+                        WarpService.INSTANCE.getCountdownTicks(c.target),
+                        c.mark - 4,
+                        "adding another carrier's source preserves the existing target countdown");
+                }
+                if (t == 9) WarpService.INSTANCE.removeSource(SOURCE_IDS[1]);
+                if (t == 12) c.eq(
+                    WarpService.INSTANCE.getCountdownTicks(c.owner),
+                    -1,
+                    "removing the other portable source leaves no self countdown");
+                if (t >= 13)
+                    WarpService.INSTANCE.offerSource(SOURCE_IDS[2], c.world, 0, 65, 0, c.second, c.owner.getUniqueID());
+                if (t == 16) {
+                    c.check(
+                        WarpService.INSTANCE.getCountdownTicks(c.owner) > 0,
+                        "block source ignores carrier exclusion and still detects its owner");
                     return true;
                 }
                 return false;
@@ -411,8 +455,8 @@ public final class TestScenarios {
                 if (WarpService.INSTANCE.isFlying(c.owner) && c.mark == 0) {
                     c.mark = t;
                     c.check(
-                        WarpService.INSTANCE.getSpeedMetersPerSecond(c.owner) > 2000000,
-                        "high power exercises sweep over a hundred thousand metres per tick");
+                        WarpService.INSTANCE.getSpeedMetersPerSecond(c.owner) > 20000,
+                        "high power exercises sweep over thousands of metres per tick");
                 }
                 if (c.mark > 0 && t == c.mark + 2) {
                     c.check(!WarpService.INSTANCE.isFlying(c.owner), "thin wall intercepts high speed flight");

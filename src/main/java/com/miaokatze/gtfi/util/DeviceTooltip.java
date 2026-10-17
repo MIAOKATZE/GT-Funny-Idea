@@ -24,6 +24,7 @@ public final class DeviceTooltip {
             lines,
             "gtfi.tooltip.ejector.description",
             "gtfi.tooltip.ejector.threshold",
+            "gtfi.tooltip.ejector.attenuation",
             "gtfi.tooltip.block.countdown",
             "gtfi.tooltip.block.power",
             "gtfi.tooltip.block.orbit");
@@ -38,6 +39,7 @@ public final class DeviceTooltip {
             lines,
             "gtfi.tooltip.ejector.description",
             "gtfi.tooltip.ejector.threshold",
+            "gtfi.tooltip.ejector.attenuation",
             "gtfi.tooltip.portable.countdown",
             "gtfi.tooltip.portable.power",
             "gtfi.tooltip.portable.equipment");
@@ -54,7 +56,7 @@ public final class DeviceTooltip {
             StatCollector.translateToLocalFormatted(
                 "gtfi.tooltip.transfer.selected",
                 StatCollector.translateToLocal("gtfi.warp." + type)));
-        description(lines, "gtfi.tooltip.transfer.description", "gtfi.ui.unlock");
+        description(lines, "gtfi.tooltip.transfer.description", "gtfi.tooltip.transfer.obtain", "gtfi.ui.unlock");
         controls(
             lines,
             "gtfi.tooltip.transfer",

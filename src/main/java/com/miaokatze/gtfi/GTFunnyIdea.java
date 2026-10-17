@@ -18,13 +18,13 @@ import cpw.mods.fml.common.event.FMLServerStoppedEvent;
 @Mod(
     modid = GTFunnyIdea.MOD_ID,
     name = GTFunnyIdea.MOD_NAME,
-    version = Tags.VERSION,
+    version = GTFunnyIdea.VERSION,
     dependencies = "required-after:gregtech;required-after:modularui2@[2.3.92-1.7.10,);required-after:Thaumcraft@[4.2.3.5,);required-after:Baubles")
 public final class GTFunnyIdea {
 
     public static final String MOD_ID = "gtfi";
     public static final String MOD_NAME = "GT-Funny-Idea";
-    public static final String VERSION = Tags.VERSION;
+    public static final String VERSION = "v" + Tags.RELEASE_VERSION;
     public static final Logger LOG = LogManager.getLogger(MOD_ID);
 
     @Mod.Instance(MOD_ID)

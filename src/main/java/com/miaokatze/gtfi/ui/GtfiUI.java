@@ -88,7 +88,7 @@ public final class GtfiUI {
                 .copy();
             s.power = v;
             setter.accept(s);
-        }, canEdit, portable ? 0.1 : 1, portable ? 1 : 1000);
+        }, canEdit, portable ? 0.001 : 0.01, portable ? 1 : 1000);
         numeric(panel, sync, "damage", 118, () -> getter.get().damageFactor * 100, v -> {
             EjectorSettings s = getter.get()
                 .copy();

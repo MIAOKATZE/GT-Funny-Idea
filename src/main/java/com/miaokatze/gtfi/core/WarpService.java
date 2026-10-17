@@ -76,6 +76,12 @@ public final class WarpService {
 
     /** Sources are leases: callers must refresh them every server tick. */
     public void offerSource(String id, World world, double x, double y, double z, EjectorSettings settings) {
+        offerSource(id, world, x, y, z, settings, null);
+    }
+
+    /** Only portable sources may exclude their carrier; block sources continue to affect every nearby player. */
+    public void offerSource(String id, World world, double x, double y, double z, EjectorSettings settings,
+        UUID excludedPlayer) {
         if (world == null || world.isRemote || id == null || settings == null) return;
         EjectorSettings safe = settings.copy()
             .sanitize(settings.portable, GtfiConfig.safeMode);
@@ -84,7 +90,7 @@ public final class WarpService {
             return;
         }
         Source old = sources.get(id);
-        Source source = new Source(world, x, y, z, safe, tick);
+        Source source = new Source(world, x, y, z, safe, tick, safe.portable ? excludedPlayer : null);
         sources.put(id, source);
         // Configuration changes restart a countdown; moving portable sources do not.
         if (old != null && (old.world != world || old.settings.countdownSeconds != safe.countdownSeconds
@@ -176,7 +182,8 @@ public final class WarpService {
         long earliest = Long.MAX_VALUE;
         for (Map.Entry<String, Source> entry : sources.entrySet()) {
             Source source = entry.getValue();
-            if (source.world != player.worldObj || total < source.settings.threshold
+            if (id.equals(source.excludedPlayer) || source.world != player.worldObj
+                || total < source.settings.threshold
                 || player.getDistanceSq(source.x, source.y, source.z) > source.settings.range * source.settings.range)
                 continue;
             active.add(entry.getKey());
@@ -401,14 +408,16 @@ public final class WarpService {
         final double x, y, z;
         final EjectorSettings settings;
         final long lastSeen;
+        final UUID excludedPlayer;
 
-        Source(World world, double x, double y, double z, EjectorSettings settings, long tick) {
+        Source(World world, double x, double y, double z, EjectorSettings settings, long tick, UUID excludedPlayer) {
             this.world = world;
             this.x = x;
             this.y = y;
             this.z = z;
             this.settings = settings;
             this.lastSeen = tick;
+            this.excludedPlayer = excludedPlayer;
         }
     }
 

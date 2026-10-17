@@ -262,14 +262,14 @@ def verify(args, receipt):
     candidate_tags = tag_constants(candidate[tags_path])
     _, final_metadata = read_metadata(final["mcmod.info"])
     _, candidate_metadata = read_metadata(candidate["mcmod.info"])
-    candidate_version = candidate_metadata.get("version")
+    candidate_version = candidate_tags["VERSION"]
     require(isinstance(candidate_version, str) and len(candidate_version) >= 5
             and candidate_version.isascii() and not re.search(r"\s|\$\{", candidate_version),
             "Invalid candidate build version")
     require(final_metadata.get("version") == final_tags["VERSION"] == tag,
             "Final metadata and Tags.VERSION must exactly match the release tag")
-    require(candidate_tags["VERSION"] == candidate_version,
-            "Candidate metadata and Tags.VERSION disagree")
+    require(candidate_metadata.get("version") in (candidate_version, tag),
+            "Candidate metadata must use its legacy build version or the declared release tag")
     require(final_tags["RELEASE_VERSION"] == candidate_tags["RELEASE_VERSION"] == release,
             "Tags.RELEASE_VERSION must match the declared release in both JARs")
     require(not any(marker in final_tags["VERSION"] for marker in ("dirty", "master+")),
@@ -279,6 +279,7 @@ def verify(args, receipt):
     require(final_metadata.get("name") == props.get("modName")
             and final_metadata.get("mcversion") == props.get("minecraftVersion"), "Metadata identity mismatch")
     receipt.update({"metadata_url": expected_url, "candidate_build_version": candidate_version,
+                    "candidate_metadata_version": candidate_metadata.get("version"),
                     "final_tags": final_tags, "candidate_tags": candidate_tags})
     receipt["checks"].append("metadata URL/identity and actual Tags string constants")
     class_counts = {}
@@ -311,6 +312,7 @@ def verify(args, receipt):
         require(name in final, "Source resource absent from final JAR: " + name)
         expected = source.read_bytes()
         if name == "mcmod.info":
+            expected = expected.replace(b"@GTFI_TAG_VERSION@", tag.encode("utf-8"))
             for key, value in {"modId": "gtfi", "modName": props["modName"],
                                "modVersion": tag, "minecraftVersion": props["minecraftVersion"]}.items():
                 expected = expected.replace(("${" + key + "}").encode("ascii"), value.encode("utf-8"))

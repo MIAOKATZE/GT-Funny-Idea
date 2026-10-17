@@ -50,15 +50,17 @@ gtfi.tooltip.ejector.settings_range=Warp threshold >= %1$s; range %2$s blocks
 gtfi.tooltip.ejector.settings_power=Power %1$s; countdown %2$s seconds
 gtfi.tooltip.ejector.description=Players meeting the warp threshold are ejected after the countdown.
 gtfi.tooltip.ejector.threshold=Triggers when total warp >= the set value; minimum and default threshold: 25.
+gtfi.tooltip.ejector.attenuation=Within range, power stays at 50% from half the radius outward.
 gtfi.tooltip.block.countdown=Normal countdown: minimum 15s, default 20s; Safe Mode minimum: 5s.
-gtfi.tooltip.block.power=At close range, power 1 = 10000 m/s; maximum power 1000 = 10000000 m/s.
+gtfi.tooltip.block.power=Power 0.01–1000; at close range, power 1 = 100 m/s.
 gtfi.tooltip.block.orbit=Golden and platinum sparks continuously orbit the node.
 gtfi.tooltip.block.configure=Place, then right click to configure the ejector.
 gtfi.tooltip.portable.countdown=Portable countdown: minimum 5s, default 5s.
-gtfi.tooltip.portable.power=At close range, power 0.1–1 corresponds to 1000–10000 m/s.
-gtfi.tooltip.portable.equipment=Works in your inventory or equipped in the Baubles AMULET slot.
+gtfi.tooltip.portable.power=At close range, power 0.001–1 corresponds to 0.1–100 m/s.
+gtfi.tooltip.portable.equipment=Works in your inventory or Baubles AMULET slot; ignores the wearer.
 gtfi.tooltip.portable.configure=Right click: configure the portable ejector.
 gtfi.tooltip.transfer.selected=Selected warp type: %1$s
 gtfi.tooltip.transfer.description=Transfer your warp to another player to gain experience and levels.
+gtfi.tooltip.transfer.obtain=Right-click a placed Warp Ejector with a Thaumcraft wand; this consumes the block.
 gtfi.tooltip.transfer.target=Keep aiming at a living player within 3 blocks, with clear line of sight.
 gtfi.tooltip.transfer.cancel=Release right click or lose the target to cancel; reacquire and charge again.

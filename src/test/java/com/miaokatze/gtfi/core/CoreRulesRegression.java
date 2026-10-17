@@ -6,10 +6,12 @@ public final class CoreRulesRegression {
     private CoreRulesRegression() {}
 
     public static void main(String[] args) {
-        close(10000000, FlightMath.launchSpeed(1000, 0, 200), "maximum launch speed");
-        close(1000, FlightMath.launchSpeed(0.1, 0, 10), "minimum portable power");
-        close(5000, FlightMath.launchSpeed(1, 5, 10), "linear distance attenuation");
-        close(0, FlightMath.launchSpeed(1000, 200, 200), "range edge");
+        close(100000, FlightMath.launchSpeed(1000, 0, 200), "maximum launch speed");
+        close(0.1, FlightMath.launchSpeed(0.001, 0, 10), "minimum portable power");
+        close(75, FlightMath.launchSpeed(1, 2.5, 10), "linear inner-half attenuation");
+        close(50, FlightMath.launchSpeed(1, 5, 10), "half-radius boundary");
+        close(50, FlightMath.launchSpeed(1, 7.5, 10), "outer-half minimum power");
+        close(50000, FlightMath.launchSpeed(1000, 200, 200), "range-edge minimum power");
         close(50, FlightMath.speedMetersPerSecond(1.5, 2, 0), "blocks/tick to metres/second");
         // A 2,500-block tick must still hit a one-block wall rather than test only its endpoint.
         close(0.004, FlightMath.sweep(0, 1, 0, 2500, 0, 0, 10, 0, -1, 11, 2, 1), "high speed wall");

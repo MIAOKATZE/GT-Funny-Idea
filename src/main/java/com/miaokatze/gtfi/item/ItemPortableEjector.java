@@ -79,8 +79,8 @@ public class ItemPortableEjector extends Item implements IBaubleExpanded, IGuiHo
     private void updateSource(ItemStack stack, EntityPlayer player, String slot) {
         String id = "portable:" + player.getUniqueID() + ":" + slot;
         EjectorSettings settings = getSettings(stack);
-        if (settings.enabled)
-            WarpService.INSTANCE.offerSource(id, player.worldObj, player.posX, player.posY, player.posZ, settings);
+        if (settings.enabled) WarpService.INSTANCE
+            .offerSource(id, player.worldObj, player.posX, player.posY, player.posZ, settings, player.getUniqueID());
         else WarpService.INSTANCE.removeSource(id);
     }
 

@@ -50,15 +50,17 @@ gtfi.tooltip.ejector.settings_range=扭曲阈值 ≥ %1$s；范围 %2$s 格
 gtfi.tooltip.ejector.settings_power=力度 %1$s；倒计时 %2$s 秒
 gtfi.tooltip.ejector.description=达到所设扭曲阈值的玩家会在倒计时结束后被弹射。
 gtfi.tooltip.ejector.threshold=扭曲总量 ≥ 所设值时触发；阈值最低及默认均为25。
+gtfi.tooltip.ejector.attenuation=范围内距离达到半径一半后，弹射力度保持50%。
 gtfi.tooltip.block.countdown=普通模式倒计时最低15秒、默认20秒；安全模式最低5秒。
-gtfi.tooltip.block.power=近距力度1 = 10000 m/s；最高力度1000 = 10000000 m/s。
+gtfi.tooltip.block.power=力度0.01–1000；近距力度1 = 100 m/s。
 gtfi.tooltip.block.orbit=金色与白金色光粒持续环绕节点旋转。
 gtfi.tooltip.block.configure=放置后右键：配置阈值、范围、力度和倒计时。
 gtfi.tooltip.portable.countdown=便携倒计时最低5秒，默认5秒。
-gtfi.tooltip.portable.power=近距力度0.1–1对应1000–10000 m/s。
-gtfi.tooltip.portable.equipment=背包内生效，也可装备到Baubles的AMULET吊坠槽。
+gtfi.tooltip.portable.power=近距力度0.001–1对应0.1–100 m/s。
+gtfi.tooltip.portable.equipment=背包或Baubles吊坠槽内生效，不会弹射持有者本人。
 gtfi.tooltip.portable.configure=右键：配置便携弹射器。
 gtfi.tooltip.transfer.selected=已选转移类型：%1$s
 gtfi.tooltip.transfer.description=将自身扭曲转移给目标玩家，通过转移获得经验并升级。
+gtfi.tooltip.transfer.obtain=用神秘时代法杖右击已放置的扭曲人弹射器获取，会消耗该方块。
 gtfi.tooltip.transfer.target=必须持续瞄准3格内无遮挡的存活玩家。
 gtfi.tooltip.transfer.cancel=松开右键或丢失目标即取消蓄力，重新瞄准后需重新蓄力。

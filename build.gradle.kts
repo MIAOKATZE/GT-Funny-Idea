@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
     id("com.gtnewhorizons.gtnhconvention")
 }
@@ -5,6 +7,15 @@ plugins {
 // Keep the declared release separate from the convention's Git-derived build version.
 extensions.configure<com.gtnewhorizons.retrofuturagradle.MinecraftExtension>("minecraft") {
     injectedTags.put("RELEASE_VERSION", providers.gradleProperty("RELEASE_VERSION"))
+}
+
+val releaseTagVersion = providers.gradleProperty("RELEASE_VERSION").map { "v$it" }
+
+tasks.processResources {
+    inputs.property("gtfiTagVersion", releaseTagVersion)
+    filesMatching("mcmod.info") {
+        filter<ReplaceTokens>("tokens" to mapOf("GTFI_TAG_VERSION" to releaseTagVersion.get()))
+    }
 }
 
 // Pure rules use an explicit main entry point without a Minecraft bootstrap.
