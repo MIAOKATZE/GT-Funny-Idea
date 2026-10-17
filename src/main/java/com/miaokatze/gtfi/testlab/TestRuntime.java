@@ -150,7 +150,7 @@ public final class TestRuntime {
             if ("VISUAL".equals(phase)) {
                 elapsed++;
                 context.using(false);
-                WarpService.INSTANCE.offerSource(TestScenarios.SOURCE_IDS[0], context.world, 6, 65, 2, context.first);
+                WarpService.INSTANCE.offerSource(TestScenarios.SOURCE_IDS[0], context.world, 8, 65, 2, context.first);
                 if (elapsed >= 160) {
                     cleanupActors();
                     context = null;
@@ -382,6 +382,26 @@ public final class TestRuntime {
         return "Returned to original dimension and position";
     }
 
+    String camera(EntityPlayerMP player, String pose) {
+        if (!player.canCommandSenderUseCommand(4, "gtfi")) throw new IllegalStateException("Camera requires OP4");
+        if (player.dimension != dimension || !(player.worldObj.provider instanceof TestWorldProvider))
+            throw new IllegalStateException("Camera requires the dedicated test dimension");
+        if (player.playerNetServerHandler == null)
+            throw new IllegalStateException("Camera requires a connected player");
+        if ("node".equals(pose)) {
+            if (player.worldObj.getBlock(-4, 65, 0) != com.miaokatze.gtfi.register.ModContent.WARP_EJECTOR
+                || !(player.worldObj.getTileEntity(-4, 65, 0) instanceof com.miaokatze.gtfi.block.TileWarpEjector))
+                throw new IllegalStateException("Actual placed ejector/tile missing at (-4,65,0); build first");
+            player.playerNetServerHandler.setPlayerLocation(-1.5, 65, 2.5, 135, 21.6F);
+            return "camera=node actual placed gtfi:warp_ejector at (-4,65,0); feet=(-1.5,65,2.5),yaw=135,pitch=21.6";
+        }
+        if ("effects".equals(pose)) {
+            player.playerNetServerHandler.setPlayerLocation(2, 65, 3, -90, 4.4F);
+            return "camera=effects feet=(2,65,3),yaw=-90,pitch=4.4; natural actor focus=(10,66,3)";
+        }
+        throw new IllegalArgumentException("Camera poses: node|effects");
+    }
+
     String visual(EntityPlayerMP player) {
         idleRequired();
         if (player.dimension != dimension) throw new IllegalStateException("Enter test dimension first");
@@ -390,15 +410,15 @@ public final class TestRuntime {
             new TestActor(world, "observer") };
         context = new TestScenarios.Context(world, actors);
         context.tool();
-        context.owner.setPosition(8, 65, 2);
-        context.target.setPosition(8, 65, 4);
+        context.owner.setPosition(10, 65, 2);
+        context.target.setPosition(10, 65, 4);
         context.warp(context.owner, WarpType.TEMP, 100);
         context.first = com.miaokatze.gtfi.core.EjectorSettings.portableDefaults();
         context.first.range = 5;
         context.first.damageFactor = 0;
         elapsed = 0;
         phase = "VISUAL";
-        return "Natural production transfer at 3s and synthetic flight at 5s near (8,65,2); ends after 8s";
+        return "Natural production transfer at 3s and synthetic flight at 5s near (10,65,2); ends after 8s";
     }
 
     String preview(EntityPlayerMP player) {

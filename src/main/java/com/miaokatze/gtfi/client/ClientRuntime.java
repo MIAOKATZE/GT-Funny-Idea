@@ -136,6 +136,12 @@ public final class ClientRuntime {
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
             if (countdown >= 0 && tick - countdownAt < 40) {
+                String warning = StatCollector.translateToLocal("gtfi.hud.ejector_warning");
+                mc.fontRenderer.drawStringWithShadow(
+                    warning,
+                    width / 2 - mc.fontRenderer.getStringWidth(warning) / 2,
+                    height / 2 - 51,
+                    0xFFE6A0);
                 String text = String.format(java.util.Locale.ROOT, "%.1f", countdown / 20D);
                 GL11.glPushMatrix();
                 GL11.glTranslatef(width / 2F, height / 2F - 34, 0);

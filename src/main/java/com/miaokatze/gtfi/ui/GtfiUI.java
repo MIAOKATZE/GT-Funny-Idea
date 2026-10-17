@@ -47,11 +47,17 @@ public final class GtfiUI {
     }
 
     public static ModularPanel portable(PlayerInventoryGuiData data, PanelSyncManager sync) {
-        ItemStack original = data.getUsedItemStack();
-        return settingsPanel("portable", true, sync, () -> ItemPortableEjector.getSettings(original), value -> {
-            ItemPortableEjector.setSettings(original, value);
-            data.getPlayer().inventory.markDirty();
-        }, () -> data.getUsedItemStack() == original && original.getItem() == ModContent.PORTABLE_EJECTOR);
+        InventoryUiBinding binding = new InventoryUiBinding(data, ModContent.PORTABLE_EJECTOR);
+        return settingsPanel("portable", true, sync, () -> {
+            ItemStack current = binding.current();
+            return current == null ? EjectorSettings.portableDefaults() : ItemPortableEjector.getSettings(current);
+        }, value -> {
+            ItemStack current = binding.current();
+            if (current != null) {
+                ItemPortableEjector.setSettings(current, value);
+                binding.markDirty(current);
+            }
+        }, binding::isValid);
     }
 
     private static ModularPanel settingsPanel(String name, boolean portable, PanelSyncManager sync,
@@ -62,7 +68,9 @@ public final class GtfiUI {
         sync.syncValue("editable", editable);
         panel.child(
             GtfiMuiTheme.label(
-                () -> tr(editable.getBoolValue() ? "gtfi.ui.settings_hint" : "gtfi.ui.read_only"),
+                () -> tr(
+                    editable.getBoolValue() ? "gtfi.ui.settings_hint"
+                        : portable ? "gtfi.ui.device_unavailable" : "gtfi.ui.read_only"),
                 14,
                 39,
                 292,
@@ -167,9 +175,8 @@ public final class GtfiUI {
 
     public static ModularPanel transferer(PlayerInventoryGuiData data, PanelSyncManager sync) {
         EntityPlayer player = data.getPlayer();
-        ItemStack original = data.getUsedItemStack();
-        BooleanSupplier valid = () -> !GtfiConfig.safeMode && data.getUsedItemStack() == original
-            && original.getItem() == ModContent.WARP_TRANSFERER;
+        InventoryUiBinding binding = new InventoryUiBinding(data, ModContent.WARP_TRANSFERER);
+        BooleanSupplier valid = () -> !GtfiConfig.safeMode && binding.isValid();
         ModularPanel panel = GtfiMuiTheme.panel("transferer", 234);
         GtfiMuiTheme.header(panel, "gtfi.ui.transferer");
         IntSyncValue level = new IntSyncValue(() -> TransferService.getLevel(player));
@@ -201,14 +208,16 @@ public final class GtfiUI {
                         GtfiMuiTheme.TEXT));
         panel.child(GtfiMuiTheme.label(() -> tr("gtfi.ui.type"), 14, 102, 292, 18, GtfiMuiTheme.MUTED));
         IntSyncValue type = new IntSyncValue(
-            () -> TransferService.getType(original)
+            () -> TransferService.getType(binding.current())
                 .ordinal(),
             v -> {
                 if (!sync.isClient() && valid.getAsBoolean()
                     && v >= 0
                     && v < WarpType.values().length
-                    && TransferService.canSelect(player, WarpType.values()[v]))
-                    TransferService.setType(player, original, WarpType.values()[v]);
+                    && TransferService.canSelect(player, WarpType.values()[v])) {
+                    if (TransferService.setType(player, binding.current(), WarpType.values()[v]))
+                        binding.markDirty(binding.current());
+                }
             }).allowC2S();
         sync.syncValue("type", type);
         panel.child(

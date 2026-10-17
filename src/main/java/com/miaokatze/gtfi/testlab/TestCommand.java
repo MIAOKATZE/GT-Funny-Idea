@@ -21,7 +21,7 @@ final class TestCommand extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/gtfi test build|reset|run all|status|report|actors|enter|preview|visual|leave|stop";
+        return "/gtfi test build|reset|run all|status|report|actors|enter|preview|visual|camera node|effects|leave|stop";
     }
 
     @Override
@@ -36,6 +36,8 @@ final class TestCommand extends CommandBase {
             else if ("actors".equals(action)) result = runtime.actors();
             else if ("build".equals(action) || "reset".equals(action)) result = runtime.build();
             else if ("run".equals(action) && args.length == 3) result = runtime.run(args[2]);
+            else if ("camera".equals(action) && args.length == 3)
+                result = runtime.camera(getCommandSenderAsPlayer(sender), args[2]);
             else if ("enter".equals(action)) result = runtime.enter(getCommandSenderAsPlayer(sender));
             else if ("visual".equals(action)) result = runtime.visual(getCommandSenderAsPlayer(sender));
             else if ("preview".equals(action)) result = runtime.preview(getCommandSenderAsPlayer(sender));
@@ -62,8 +64,11 @@ final class TestCommand extends CommandBase {
             "enter",
             "preview",
             "visual",
+            "camera",
             "leave",
             "stop");
+        if (args.length == 3 && "camera".equals(args[1]))
+            return getListOfStringsMatchingLastWord(args, "node", "effects");
         if (args.length == 3 && "run".equals(args[1])) return getListOfStringsMatchingLastWord(args, "all");
         return null;
     }

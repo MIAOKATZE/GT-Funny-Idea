@@ -531,6 +531,8 @@ public final class TestScenarios {
             .equals(selector)) selected.add(scenario);
         for (Scenario scenario : NativeScenarios.all()) if ("all".equals(selector) || scenario.id()
             .equals(selector)) selected.add(scenario);
+        for (Scenario scenario : UiScenarios.all()) if ("all".equals(selector) || scenario.id()
+            .equals(selector)) selected.add(scenario);
         return selected;
     }
 

@@ -14,10 +14,21 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.network.play.client.C0BPacketEntityAction;
+import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.ScreenShotHelper;
 import net.minecraft.util.Vec3;
 
+import com.cleanroommc.modularui.screen.ModularScreen;
+import com.cleanroommc.modularui.value.sync.BooleanSyncValue;
+import com.cleanroommc.modularui.value.sync.IntSyncValue;
+import com.cleanroommc.modularui.value.sync.PanelSyncManager;
+import com.cleanroommc.modularui.value.sync.StringSyncValue;
 import com.miaokatze.gtfi.GTFunnyIdea;
+import com.miaokatze.gtfi.block.TileWarpEjector;
+import com.miaokatze.gtfi.core.EjectorSettings;
+import com.miaokatze.gtfi.core.TransferService;
+import com.miaokatze.gtfi.core.WarpType;
+import com.miaokatze.gtfi.item.ItemPortableEjector;
 import com.miaokatze.gtfi.network.GtfiNetwork;
 import com.miaokatze.gtfi.register.ModContent;
 
@@ -80,8 +91,9 @@ public final class ClientSmoke {
                 chat("/give " + mc.thePlayer.getCommandSenderName() + " gtfi:warp_ejector 1");
                 chat("/give " + mc.thePlayer.getCommandSenderName() + " gtfi:portable_ejector 1");
                 chat("/give " + mc.thePlayer.getCommandSenderName() + " gtfi:warp_transferer 1");
-                chat("/tp " + mc.thePlayer.getCommandSenderName() + " -2 65 3 145 12");
+                chat("/gtfi test camera node");
             }
+            if (ticks == 280) select(Item.getItemFromBlock(ModContent.WARP_EJECTOR));
             if (ticks == 300) request("01-gold-quantum-node", false);
             if (ticks == 320) {
                 mc.playerController.onPlayerRightClick(
@@ -100,14 +112,43 @@ public final class ClientSmoke {
                 select(ModContent.PORTABLE_EJECTOR);
             }
             if (ticks == 410) use(false);
-            if (ticks == 450) request("03-pendant-mui", true);
+            if (ticks == 430) writePortableThroughMui();
+            if (ticks == 450) mc.thePlayer.closeScreen();
+            if (ticks == 460) use(false);
+            if (ticks == 470) {
+                EjectorSettings stored = ItemPortableEjector.getSettings(mc.thePlayer.getHeldItem());
+                if (stored.range != 14 || stored.enabled) throw new IllegalStateException(
+                    "Native MUI portable write did not persist after reopening: range=" + stored.range
+                        + " enabled="
+                        + stored.enabled);
+                request("03-pendant-mui", true);
+                evidence(
+                    "portable-roundtrip.txt",
+                    "Native MUI C2S StringSyncValue(range=14), IntSyncValue(enabled=0); "
+                        + "server inventory update and reopened panel confirm persisted range=14, enabled=false. "
+                        + "This is native MUI network API validation, not physical mouse input.");
+            }
             if (ticks == 480) {
                 mc.thePlayer.closeScreen();
                 sneak(false);
                 select(ModContent.WARP_TRANSFERER);
             }
             if (ticks == 500) use(true);
-            if (ticks == 540) request("04-transferer-mui", true);
+            if (ticks == 520) ((IntSyncValue) nativeSync().findSyncHandlerNullable("type", 0))
+                .setIntValue(WarpType.NORMAL.ordinal(), true, true);
+            if (ticks == 535) mc.thePlayer.closeScreen();
+            if (ticks == 540) use(true);
+            if (ticks == 560) {
+                if (TransferService.getType(mc.thePlayer.getHeldItem()) != WarpType.TEMP
+                    || ((IntSyncValue) nativeSync().findSyncHandlerNullable("type", 0)).getIntValue()
+                        != WarpType.TEMP.ordinal())
+                    throw new IllegalStateException("Locked NORMAL type was not rejected");
+                request("04-transferer-mui", true);
+                evidence(
+                    "transferer-locked-type.txt",
+                    "Native MUI IntSyncValue(type=NORMAL) C2S request at level 1; "
+                        + "server rejected locked type, reopened server panel and inventory remain TEMP.");
+            }
             if (ticks == 570) {
                 mc.thePlayer.closeScreen();
                 sneak(false);
@@ -133,7 +174,7 @@ public final class ClientSmoke {
                 GtfiNetwork.sendAlt(false);
             }
             if (ticks == 800) {
-                chat("/tp " + mc.thePlayer.getCommandSenderName() + " 2 65 3 -90 8");
+                chat("/gtfi test camera effects");
                 chat("/gtfi test visual");
             }
             if (ticks == 870) request("08-authoritative-transfer-particles", false);
@@ -174,6 +215,7 @@ public final class ClientSmoke {
             if (requireMui && !screen.contains("modularui")) {
                 throw new IllegalStateException("Expected server MUI screen for " + capture + ", got " + screen);
             }
+            if ("01-gold-quantum-node".equals(capture)) verifyPlacedBlock();
             output.mkdirs();
             String filename = "gtfi-" + capture + ".png";
             ScreenShotHelper
@@ -193,6 +235,12 @@ public final class ClientSmoke {
                     + mc.thePlayer.posY
                     + ","
                     + mc.thePlayer.posZ
+                    + "\nfeetY="
+                    + mc.thePlayer.boundingBox.minY
+                    + "\nyaw="
+                    + mc.thePlayer.rotationYaw
+                    + "\npitch="
+                    + mc.thePlayer.rotationPitch
                     + "\nheld="
                     + mc.thePlayer.getHeldItem()
                     + "\n").getBytes(StandardCharsets.UTF_8));
@@ -201,6 +249,46 @@ public final class ClientSmoke {
         } catch (Exception error) {
             fail(error);
         }
+    }
+
+    private void verifyPlacedBlock() {
+        Minecraft mc = Minecraft.getMinecraft();
+        MovingObjectPosition hit = mc.objectMouseOver;
+        if (mc.theWorld.getBlock(-4, 65, 0) != ModContent.WARP_EJECTOR
+            || !(mc.theWorld.getTileEntity(-4, 65, 0) instanceof TileWarpEjector)
+            || hit == null
+            || hit.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK
+            || hit.blockX != -4
+            || hit.blockY != 65
+            || hit.blockZ != 0
+            || mc.thePlayer.getHeldItem() == null
+            || mc.thePlayer.getHeldItem()
+                .getItem() != Item.getItemFromBlock(ModContent.WARP_EJECTOR)) {
+            throw new IllegalStateException(
+                "Expected placed ejector Block/Tile at (-4,65,0), crosshair hit and selected block item");
+        }
+    }
+
+    private PanelSyncManager nativeSync() {
+        ModularScreen screen = ModularScreen.getCurrent();
+        if (screen == null) throw new IllegalStateException("Expected native MUI window");
+        return screen.getSyncManager()
+            .getPanelSyncManager(
+                screen.getMainPanel()
+                    .getName());
+    }
+
+    private void writePortableThroughMui() {
+        PanelSyncManager sync = nativeSync();
+        if (!((BooleanSyncValue) sync.findSyncHandlerNullable("editable", 0)).getBoolValue())
+            throw new IllegalStateException("Held portable device is incorrectly read-only");
+        ((StringSyncValue) sync.findSyncHandlerNullable("range", 0)).setStringValue("14", true, true);
+        ((IntSyncValue) sync.findSyncHandlerNullable("enabled", 0)).setIntValue(0, true, true);
+    }
+
+    private void evidence(String filename, String text) throws java.io.IOException {
+        output.mkdirs();
+        Files.write(new File(output, filename).toPath(), text.getBytes(StandardCharsets.UTF_8));
     }
 
     private void select(Item item) {
