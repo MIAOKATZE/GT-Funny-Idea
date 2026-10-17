@@ -87,7 +87,7 @@ public final class TransferService {
         }
         ItemStack held = player.getCurrentEquippedItem();
         if (held != null && held.getItem() == ModContent.WARP_TRANSFERER
-            && player.getItemInUse() == held
+            && player.isUsingItem()
             && !GtfiConfig.safeMode) altCharging.put(player.getUniqueID(), true);
     }
 
@@ -102,7 +102,7 @@ public final class TransferService {
             || !player.isEntityAlive()
             || stack == null
             || stack != player.getCurrentEquippedItem()
-            || stack != player.getItemInUse()
+            || !player.isUsingItem()
             || stack.getItem() != ModContent.WARP_TRANSFERER) {
             stopUsing(player);
             return;
@@ -177,7 +177,13 @@ public final class TransferService {
         Vec3 eye = Vec3.createVectorHelper(player.posX, player.posY + player.getEyeHeight(), player.posZ);
         Vec3 look = player.getLookVec();
         Vec3 end = eye.addVector(look.xCoord * 3, look.yCoord * 3, look.zCoord * 3);
-        MovingObjectPosition wall = player.worldObj.func_147447_a(eye, end, false, true, false);
+        // World ray tracing advances its first Vec3 in place. Keep the real eye for entity hits/range.
+        MovingObjectPosition wall = player.worldObj.func_147447_a(
+            Vec3.createVectorHelper(eye.xCoord, eye.yCoord, eye.zCoord),
+            Vec3.createVectorHelper(end.xCoord, end.yCoord, end.zCoord),
+            false,
+            true,
+            false);
         double bestDistance = wall == null ? 3.000001 : eye.distanceTo(wall.hitVec);
         EntityPlayerMP nearest = null;
         for (Object object : player.worldObj.playerEntities) {
@@ -290,7 +296,7 @@ public final class TransferService {
             if (player == null) continue;
             if (player.isDead || player.dimension != state.dimension
                 || player.worldObj.getTotalWorldTime() > state.lastTick + 1
-                || player.getItemInUse() != state.stack
+                || !player.isUsingItem()
                 || player.getCurrentEquippedItem() != state.stack
                 || GtfiConfig.safeMode) {
                 iterator.remove();

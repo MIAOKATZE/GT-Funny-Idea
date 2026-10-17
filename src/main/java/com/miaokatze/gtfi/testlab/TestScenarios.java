@@ -484,7 +484,7 @@ public final class TestScenarios {
                         c.eq(ThaumcraftWarp.get(c.target, WarpType.NORMAL), 0, "safeMode denies transfer writes");
                         c.owner.stopUsingItem();
                         ModContent.WARP_TRANSFERER.onItemRightClick(c.tool, c.world, c.owner);
-                        c.check(c.owner.getItemInUse() == null, "safeMode item right click cannot begin use");
+                        c.check(!c.owner.isUsingItem(), "safeMode item right click cannot begin use");
                     } finally {
                         GtfiConfig.safeMode = original;
                     }

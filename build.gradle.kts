@@ -19,6 +19,13 @@ tasks.register<JavaExec>("runCoreRulesRegression") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+tasks.register<JavaExec>("runDedicatedServerAbiRegression") {
+    group = "verification"
+    description = "Rejects client-only Minecraft APIs in common and server bytecode."
+    mainClass = "com.miaokatze.gtfi.core.DedicatedServerAbiRegression"
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.named("check") {
-    dependsOn("runCoreRulesRegression")
+    dependsOn("runCoreRulesRegression", "runDedicatedServerAbiRegression")
 }

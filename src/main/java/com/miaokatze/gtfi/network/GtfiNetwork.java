@@ -224,9 +224,9 @@ public final class GtfiNetwork {
     private static boolean validTransferer(EntityPlayerMP player) {
         if (player.isDead || player.playerNetServerHandler == null) return false;
         ItemStack held = player.getHeldItem();
-        ItemStack using = player.getItemInUse();
-        return (held != null && held.getItem() == ModContent.WARP_TRANSFERER)
-            || (player.isUsingItem() && using != null && using.getItem() == ModContent.WARP_TRANSFERER);
+        // getItemInUse() is stripped from the dedicated server in 1.7.10.
+        // Held-item identity is server owned; the service separately validates active use.
+        return held != null && held.getItem() == ModContent.WARP_TRANSFERER;
     }
 
     @SubscribeEvent
