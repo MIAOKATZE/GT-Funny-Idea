@@ -1,0 +1,20 @@
+{
+  "modListVersion": 2,
+  "modList": [
+    {
+      "modid": "${modId}",
+      "name": "${modName}",
+      "description": "Warp experiments and unusual tools for GregTech: New Horizons.",
+      "version": "${modVersion}",
+      "mcversion": "${minecraftVersion}",
+      "url": "https://github.com/MIAOKATZE/GT-Funny-Idea",
+      "authorList": ["miaokatze"],
+      "credits": "",
+      "logoFile": "",
+      "screenshots": [],
+      "requiredMods": ["gregtech", "modularui2", "Thaumcraft", "Baubles"],
+      "dependencies": ["gregtech", "modularui2", "Thaumcraft", "Baubles"],
+      "useDependencyInformation": false
+    }
+  ]
+}
