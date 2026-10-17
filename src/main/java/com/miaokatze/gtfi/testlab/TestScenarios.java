@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
@@ -23,6 +24,7 @@ import com.miaokatze.gtfi.item.ItemPortableEjector;
 import com.miaokatze.gtfi.register.ModContent;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent;
 
 /** Assertions invoke the registered production items, tiles and services; no alternative business implementation. */
 public final class TestScenarios {
@@ -360,6 +362,34 @@ public final class TestScenarios {
                 if (c.mark > 0 && t == c.mark + 101) {
                     c.eq(WarpService.INSTANCE.getCooldownTicks(c.owner), 0, "cooldown expires after 100 natural ticks");
                     c.check(WarpService.INSTANCE.getCountdownTicks(c.owner) >= 99, "countdown restarts after cooldown");
+                    c.tool();
+                    c.using(false);
+                    TransferService.INSTANCE.setAltCharging(c.owner, true);
+                    c.check(
+                        TransferService.INSTANCE.isAltCharging(c.owner),
+                        "disconnect fixture begins with Alt intent");
+                    NetHandlerPlayServer connection = c.owner.playerNetServerHandler;
+                    try {
+                        c.owner.playerNetServerHandler = null;
+                        WarpService.INSTANCE.logout(new PlayerEvent.PlayerLoggedOutEvent(c.owner));
+                        c.eq(
+                            WarpService.INSTANCE.getCountdownTicks(c.owner),
+                            -1,
+                            "logout clears countdown without connection");
+                        c.check(
+                            !TransferService.INSTANCE.isAltCharging(c.owner),
+                            "logout clears use intent without connection");
+                        c.check(
+                            !WarpService.INSTANCE.isFlying(c.owner),
+                            "logout leaves no active flight without connection");
+                        c.warp(c.owner, WarpType.TEMP, 101);
+                        c.eq(
+                            ThaumcraftWarp.get(c.owner, WarpType.TEMP),
+                            101,
+                            "warp write commits without notification connection");
+                    } finally {
+                        c.owner.playerNetServerHandler = connection;
+                    }
                     return true;
                 }
                 return false;

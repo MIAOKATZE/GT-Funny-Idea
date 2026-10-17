@@ -82,6 +82,7 @@ public final class ThaumcraftWarp {
     }
 
     private static void sync(EntityPlayerMP player, WarpType type) {
-        PacketHandler.INSTANCE.sendTo(new PacketSyncWarp(player, type.syncId), player);
+        if (player.playerNetServerHandler != null)
+            PacketHandler.INSTANCE.sendTo(new PacketSyncWarp(player, type.syncId), player);
     }
 }

@@ -237,7 +237,7 @@ public final class WarpService {
             source.settings.damageFactor);
         flights.put(player.getUniqueID(), flight);
         player.capabilities.isFlying = false;
-        player.sendPlayerAbilities();
+        if (player.playerNetServerHandler != null) player.sendPlayerAbilities();
         player.fallDistance = 0;
         player.motionX = player.motionY = player.motionZ = 0;
         hooks.flight(player, speed * 20, true);
@@ -305,7 +305,7 @@ public final class WarpService {
         flight.positionY = player.posY;
         flight.positionZ = player.posZ;
         player.fallDistance = 0;
-        player.playerNetServerHandler
+        if (player.playerNetServerHandler != null) player.playerNetServerHandler
             .setPlayerLocation(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
         if (collision || unloaded) {
             finishFlight(player, flight);
@@ -336,7 +336,7 @@ public final class WarpService {
 
     private void restoreFlight(EntityPlayerMP player, Flight flight) {
         if (player.capabilities.allowFlying) player.capabilities.isFlying = flight.wasFlying;
-        player.sendPlayerAbilities();
+        if (player.playerNetServerHandler != null) player.sendPlayerAbilities();
     }
 
     private void cleanup(EntityPlayerMP player) {

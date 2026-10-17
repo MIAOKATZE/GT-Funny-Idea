@@ -54,7 +54,7 @@ public final class GtfiNetwork {
             public void countdown(EntityPlayerMP player, int ticks) {
                 VisualMessage message = message(VisualMessage.COUNTDOWN, player);
                 message.value = ticks;
-                CHANNEL.sendTo(message, player);
+                sendToConnected(message, player);
             }
 
             @Override
@@ -78,7 +78,7 @@ public final class GtfiNetwork {
                 message.value = ticks;
                 message.total = total;
                 message.active = charging;
-                CHANNEL.sendTo(message, player);
+                sendToConnected(message, player);
             }
 
             @Override
@@ -107,7 +107,7 @@ public final class GtfiNetwork {
                 message.value = level;
                 message.total = requiredXp;
                 message.extra = xp;
-                CHANNEL.sendTo(message, player);
+                sendToConnected(message, player);
             }
         });
     }
@@ -121,9 +121,18 @@ public final class GtfiNetwork {
     }
 
     private static void nearby(VisualMessage message, EntityPlayerMP player) {
-        CHANNEL.sendToAllAround(
-            message,
-            new NetworkRegistry.TargetPoint(player.dimension, player.posX, player.posY, player.posZ, 64));
+        MinecraftServer server = MinecraftServer.getServer();
+        if (server == null) return;
+        for (Object object : server.getConfigurationManager().playerEntityList) {
+            EntityPlayerMP viewer = (EntityPlayerMP) object;
+            if (viewer.dimension == player.dimension && viewer.getDistanceSqToEntity(player) <= 64 * 64)
+                sendToConnected(message, viewer);
+        }
+    }
+
+    /** Logout/login callbacks can outlive the connection; their state cleanup must still run. */
+    private static void sendToConnected(VisualMessage message, EntityPlayerMP player) {
+        if (player.playerNetServerHandler != null) CHANNEL.sendTo(message, player);
     }
 
     private static void sendTrail(VisualMessage message) {
@@ -146,7 +155,7 @@ public final class GtfiNetwork {
             double x = message.targetX + t * dx - viewer.posX;
             double y = message.targetY + t * dy - viewer.posY - 1;
             double z = message.targetZ + t * dz - viewer.posZ;
-            if (x * x + y * y + z * z <= 64 * 64) CHANNEL.sendTo(message, viewer);
+            if (x * x + y * y + z * z <= 64 * 64) sendToConnected(message, viewer);
         }
     }
 
