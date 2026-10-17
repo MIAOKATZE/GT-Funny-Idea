@@ -10,6 +10,6 @@ A lightweight Thaumcraft 4 addon for GTNH 2.9.0. Eject high-warp players, carry 
 - **便携扭曲人弹射器**：放在背包或 Baubles 吊坠槽中随身生效，并忽略持有者本人。右键设置，潜行右键开关。
 - **扭曲转移器**：用法杖右击已放置的弹射器转换取得。瞄准附近玩家蓄力，将扭曲传给对方；使用后获得经验，逐渐解锁更多扭曲类型。潜行右键打开终端，Alt 加右键可积累临时扭曲。
 
-![扭曲人弹射器蓄力中](docs/images/ejector-charging.png)
+![扭曲人弹射器蓄力中](images/ejector-charging.png)
 
 [下载 / Releases](https://github.com/MIAOKATZE/GT-Funny-Idea/releases) · [模组主页](https://miaokatze.com/)
