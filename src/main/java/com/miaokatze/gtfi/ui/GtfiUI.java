@@ -82,7 +82,7 @@ public final class GtfiUI {
                 .copy();
             s.threshold = (int) v;
             setter.accept(s);
-        }, canEdit, 26, Integer.MAX_VALUE);
+        }, canEdit, 25, Integer.MAX_VALUE);
         numeric(panel, sync, "power", 91, () -> getter.get().power, v -> {
             EjectorSettings s = getter.get()
                 .copy();
@@ -95,7 +95,7 @@ public final class GtfiUI {
             s.damageFactor = v / 100;
             setter.accept(s);
         }, canEdit, 0, 100);
-        IntSyncValue minCountdown = new IntSyncValue(() -> portable || GtfiConfig.safeMode ? 5 : 31);
+        IntSyncValue minCountdown = new IntSyncValue(() -> portable || GtfiConfig.safeMode ? 5 : 15);
         sync.syncValue("min_countdown", minCountdown);
         numeric(panel, sync, "countdown", 145, () -> getter.get().countdownSeconds, v -> {
             EjectorSettings s = getter.get()

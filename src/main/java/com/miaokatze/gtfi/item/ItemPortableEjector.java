@@ -6,10 +6,10 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
 import com.cleanroommc.modularui.api.IGuiHolder;
@@ -23,13 +23,16 @@ import com.miaokatze.gtfi.config.GtfiConfig;
 import com.miaokatze.gtfi.core.EjectorSettings;
 import com.miaokatze.gtfi.core.WarpService;
 import com.miaokatze.gtfi.ui.GtfiUI;
+import com.miaokatze.gtfi.util.DeviceTooltip;
 
 import baubles.api.BaubleType;
-import baubles.api.IBauble;
+import baubles.api.expanded.BaubleExpandedSlots;
+import baubles.api.expanded.IBaubleExpanded;
+import baubles.common.lib.PlayerHandler;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-public class ItemPortableEjector extends Item implements IBauble, IGuiHolder<PlayerInventoryGuiData> {
+public class ItemPortableEjector extends Item implements IBaubleExpanded, IGuiHolder<PlayerInventoryGuiData> {
 
     public ItemPortableEjector() {
         setUnlocalizedName("gtfi.portable_ejector");
@@ -87,6 +90,11 @@ public class ItemPortableEjector extends Item implements IBauble, IGuiHolder<Pla
     }
 
     @Override
+    public String[] getBaubleTypes(ItemStack stack) {
+        return new String[] { BaubleExpandedSlots.amuletType };
+    }
+
+    @Override
     public boolean canEquip(ItemStack stack, EntityLivingBase player) {
         return true;
     }
@@ -97,26 +105,39 @@ public class ItemPortableEjector extends Item implements IBauble, IGuiHolder<Pla
     }
 
     @Override
-    public void onEquipped(ItemStack stack, EntityLivingBase player) {}
+    public void onEquipped(ItemStack stack, EntityLivingBase player) {
+        onWornTick(stack, player);
+    }
 
     @Override
     public void onUnequipped(ItemStack stack, EntityLivingBase player) {
-        if (!player.worldObj.isRemote && player instanceof EntityPlayer)
-            WarpService.INSTANCE.removeSource("portable:" + player.getUniqueID() + ":amulet");
+        if (player.worldObj.isRemote || !(player instanceof EntityPlayer)) return;
+        IInventory baubles = PlayerHandler.getPlayerBaubles((EntityPlayer) player);
+        for (int slot = 0; slot < baubles.getSizeInventory(); slot++) {
+            ItemStack current = baubles.getStackInSlot(slot);
+            // setInventorySlotContents calls before replacement; decrStackSize calls after removal.
+            if (current == stack || current == null || current.getItem() != this)
+                WarpService.INSTANCE.removeSource("portable:" + player.getUniqueID() + ":bauble:" + slot);
+        }
     }
 
     @Override
     public void onWornTick(ItemStack stack, EntityLivingBase player) {
-        if (!player.worldObj.isRemote && player instanceof EntityPlayer)
-            updateSource(stack, (EntityPlayer) player, "amulet");
+        if (player.worldObj.isRemote || !(player instanceof EntityPlayer)) return;
+        EntityPlayer wearer = (EntityPlayer) player;
+        IInventory baubles = PlayerHandler.getPlayerBaubles(wearer);
+        for (int slot = 0; slot < baubles.getSizeInventory(); slot++) {
+            if (baubles.getStackInSlot(slot) == stack) {
+                updateSource(stack, wearer, "bauble:" + slot);
+                return;
+            }
+        }
     }
 
     @SideOnly(Side.CLIENT)
     @Override
     public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean advanced) {
-        list.add(StatCollector.translateToLocal("gtfi.tooltip.portable"));
-        list.add(StatCollector.translateToLocal("gtfi.tooltip.toggle"));
-        list.add(StatCollector.translateToLocal(getSettings(stack).enabled ? "gtfi.ui.enabled" : "gtfi.ui.disabled"));
+        DeviceTooltip.portable(stack, list);
     }
 
     @Override

@@ -47,6 +47,7 @@ public final class ClientRuntime {
         initialized = true;
         MinecraftForge.EVENT_BUS.register(INSTANCE);
         MinecraftForge.EVENT_BUS.register(INSTANCE.particles);
+        MinecraftForge.EVENT_BUS.register(new DeviceTooltipHandler());
         FMLCommonHandler.instance()
             .bus()
             .register(INSTANCE);
@@ -66,6 +67,10 @@ public final class ClientRuntime {
         GtfiNetwork.clearVisuals();
         sentAlt = false;
         inputAt = -100;
+    }
+
+    static void emitEjector(TileWarpEjector tile) {
+        INSTANCE.particles.orbit(tile);
     }
 
     @SubscribeEvent

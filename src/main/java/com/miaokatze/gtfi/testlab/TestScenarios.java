@@ -176,13 +176,14 @@ public final class TestScenarios {
                 bad.setDouble("damageFactor", 2);
                 bad.setInteger("countdownSeconds", 0);
                 EjectorSettings block = EjectorSettings.read(bad, false, false);
-                c.eq(block.threshold, 26, "block threshold lower bound greater than 25");
+                c.eq(block.threshold, 25, "block threshold lower bound is 25");
                 c.near(block.range, 10, 0, "block range lower bound");
                 c.near(EjectorSettings.blockDefaults().damageFactor, 1, 0, "default damage factor is one");
-                c.eq(EjectorSettings.blockDefaults().threshold, 26, "default threshold is 26");
+                c.eq(EjectorSettings.blockDefaults().threshold, 25, "default threshold is 25");
+                c.eq(EjectorSettings.blockDefaults().countdownSeconds, 20, "default block countdown is twenty seconds");
                 c.near(block.power, 1, 0, "nonfinite block power rejected");
                 c.near(block.damageFactor, 1, 0, "damage factor upper bound");
-                c.eq(block.countdownSeconds, 31, "normal block countdown greater than 30 seconds");
+                c.eq(block.countdownSeconds, 15, "normal block countdown lower bound is fifteen seconds");
                 c.eq(
                     EjectorSettings.read(bad, false, true).countdownSeconds,
                     5,
@@ -258,7 +259,7 @@ public final class TestScenarios {
 
             public void start(Context c) {
                 c.first = EjectorSettings.portableDefaults();
-                c.warp(c.owner, WarpType.TEMP, 26);
+                c.warp(c.owner, WarpType.TEMP, 24);
             }
 
             public boolean tick(Context c, int t) {
@@ -266,12 +267,12 @@ public final class TestScenarios {
                 if (t == 4) c.eq(
                     WarpService.INSTANCE.getCountdownTicks(c.owner),
                     -1,
-                    "warp equal to configured threshold does not trigger");
-                if (t == 5) c.warp(c.owner, WarpType.TEMP, 27);
+                    "warp below configured threshold does not trigger");
+                if (t == 5) c.warp(c.owner, WarpType.TEMP, 25);
                 if (t == 8) {
                     c.check(
                         WarpService.INSTANCE.getCountdownTicks(c.owner) > 0,
-                        "warp strictly greater than threshold triggers");
+                        "warp equal to configured threshold triggers");
                     return true;
                 }
                 return false;
@@ -410,8 +411,8 @@ public final class TestScenarios {
                 if (WarpService.INSTANCE.isFlying(c.owner) && c.mark == 0) {
                     c.mark = t;
                     c.check(
-                        WarpService.INSTANCE.getSpeedMetersPerSecond(c.owner) > 10000,
-                        "high power exercises sweep over thousands of metres per tick");
+                        WarpService.INSTANCE.getSpeedMetersPerSecond(c.owner) > 2000000,
+                        "high power exercises sweep over a hundred thousand metres per tick");
                 }
                 if (c.mark > 0 && t == c.mark + 2) {
                     c.check(!WarpService.INSTANCE.isFlying(c.owner), "thin wall intercepts high speed flight");

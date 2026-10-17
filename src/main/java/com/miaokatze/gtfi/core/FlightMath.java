@@ -10,7 +10,7 @@ public final class FlightMath {
     }
 
     public static double launchSpeed(double power, double distance, double range) {
-        return Math.min(50000, 50 * power) * Math.max(0, 1 - Math.max(0, distance) / range);
+        return Math.min(10000000, 10000 * power) * Math.max(0, 1 - Math.max(0, distance) / range);
     }
 
     /** Entry fraction for a moving point against the obstacle expanded by the moving box. */

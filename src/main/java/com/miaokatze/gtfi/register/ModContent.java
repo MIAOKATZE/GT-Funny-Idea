@@ -3,6 +3,7 @@ package com.miaokatze.gtfi.register;
 import com.miaokatze.gtfi.GTFunnyIdea;
 import com.miaokatze.gtfi.block.BlockWarpEjector;
 import com.miaokatze.gtfi.block.TileWarpEjector;
+import com.miaokatze.gtfi.item.ItemBlockWarpEjector;
 import com.miaokatze.gtfi.item.ItemPortableEjector;
 import com.miaokatze.gtfi.item.ItemWarpTransferer;
 
@@ -18,7 +19,7 @@ public final class ModContent {
     private ModContent() {}
 
     public static void register() {
-        GameRegistry.registerBlock(WARP_EJECTOR, "warp_ejector");
+        GameRegistry.registerBlock(WARP_EJECTOR, ItemBlockWarpEjector.class, "warp_ejector");
         GameRegistry.registerItem(PORTABLE_EJECTOR, "portable_ejector");
         GameRegistry.registerItem(WARP_TRANSFERER, "warp_transferer");
         GameRegistry.registerTileEntity(TileWarpEjector.class, GTFunnyIdea.MOD_ID + ":warp_ejector");

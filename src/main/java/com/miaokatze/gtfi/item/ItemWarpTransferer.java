@@ -8,7 +8,6 @@ import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
 import com.cleanroommc.modularui.api.IGuiHolder;
@@ -22,6 +21,7 @@ import com.miaokatze.gtfi.config.GtfiConfig;
 import com.miaokatze.gtfi.core.TransferService;
 import com.miaokatze.gtfi.network.GtfiNetwork;
 import com.miaokatze.gtfi.ui.GtfiUI;
+import com.miaokatze.gtfi.util.DeviceTooltip;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -75,9 +75,7 @@ public class ItemWarpTransferer extends Item implements IGuiHolder<PlayerInvento
     @SideOnly(Side.CLIENT)
     @Override
     public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean advanced) {
-        list.add(StatCollector.translateToLocal("gtfi.tooltip.transfer"));
-        list.add(StatCollector.translateToLocal("gtfi.tooltip.alt"));
-        list.add(StatCollector.translateToLocal("gtfi.tooltip.transfer_ui"));
+        DeviceTooltip.transferer(stack, list);
     }
 
     @Override

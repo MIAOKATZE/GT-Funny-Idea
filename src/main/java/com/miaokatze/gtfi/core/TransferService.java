@@ -107,6 +107,14 @@ public final class TransferService {
             stopUsing(player);
             return;
         }
+        // Bind the entire warmup to a currently visible, aimed-at player. Alt self-charging is target-free.
+        EntityPlayerMP target = charging ? null : findTarget(player);
+        if (!charging && target == null) {
+            // stopUsingItem re-enters ItemWarpTransferer.onPlayerStoppedUsing, whose cleanup is idempotent.
+            player.stopUsingItem();
+            stopUsing(player);
+            return;
+        }
         long now = player.worldObj.getTotalWorldTime();
         UseState state = uses.get(player.getUniqueID());
         WarpType type = getType(stack);
@@ -114,9 +122,11 @@ public final class TransferService {
         if (state == null || state.stack != stack
             || state.charging != charging
             || state.type != type
+            || !charging && !target.getUniqueID()
+                .equals(state.targetId)
             || state.dimension != player.dimension
             || now > state.lastTick + 1) {
-            state = new UseState(stack, charging, type, player.dimension, now);
+            state = new UseState(stack, charging, type, player.dimension, now, target);
             state.player = player;
             uses.put(player.getUniqueID(), state);
         }
@@ -136,8 +146,6 @@ public final class TransferService {
         }
         hooks.progress(player, (int) ((elapsed - 60) % 20), 20, false);
         if ((elapsed - 60) % 20 != 0) return;
-        EntityPlayerMP target = findTarget(player);
-        if (target == null) return;
         int amount = ThaumcraftWarp.transfer(player, target, type, getLevel(player));
         if (amount <= 0) return;
         awardExperience(player, amount * type.experience);
@@ -313,15 +321,17 @@ public final class TransferService {
         final WarpType type;
         final int dimension;
         final long started;
+        final UUID targetId;
         EntityPlayer player;
         long lastTick, processedTick = Long.MIN_VALUE;
 
-        UseState(ItemStack stack, boolean charging, WarpType type, int dimension, long tick) {
+        UseState(ItemStack stack, boolean charging, WarpType type, int dimension, long tick, EntityPlayerMP target) {
             this.stack = stack;
             this.charging = charging;
             this.type = type;
             this.dimension = dimension;
             started = tick;
+            targetId = target == null ? null : target.getUniqueID();
             lastTick = tick;
         }
     }

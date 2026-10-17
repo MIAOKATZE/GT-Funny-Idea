@@ -6,11 +6,11 @@ import net.minecraft.nbt.NBTTagCompound;
 public final class EjectorSettings {
 
     public boolean enabled = true;
-    public int threshold = 26;
+    public int threshold = 25;
     public double range = 50;
     public double power = 1;
     public double damageFactor = 1;
-    public int countdownSeconds = 31;
+    public int countdownSeconds = 20;
     public boolean portable;
 
     public static EjectorSettings blockDefaults() {
@@ -38,11 +38,11 @@ public final class EjectorSettings {
 
     public EjectorSettings sanitize(boolean portable, boolean safeMode) {
         this.portable = portable;
-        threshold = Math.max(26, threshold);
+        threshold = Math.max(25, threshold);
         range = finiteClamp(range, portable ? 5 : 10, portable ? 50 : 200);
         power = finiteClamp(power, portable ? 0.1 : 1, portable ? 1 : 1000);
         damageFactor = finiteClamp(damageFactor, 0, 1);
-        countdownSeconds = Math.max(portable || safeMode ? 5 : 31, Math.min(86400, countdownSeconds));
+        countdownSeconds = Math.max(portable || safeMode ? 5 : 15, Math.min(86400, countdownSeconds));
         return this;
     }
 

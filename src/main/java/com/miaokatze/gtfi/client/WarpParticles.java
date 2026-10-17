@@ -3,7 +3,9 @@ package com.miaokatze.gtfi.client;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.WeakHashMap;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -13,6 +15,7 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 
 import org.lwjgl.opengl.GL11;
 
+import com.miaokatze.gtfi.block.TileWarpEjector;
 import com.miaokatze.gtfi.network.VisualMessage;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -22,11 +25,13 @@ public final class WarpParticles {
 
     private static final int LIMIT = 768;
     private final List<Spark> sparks = new ArrayList<Spark>();
+    private final Map<TileWarpEjector, Long> orbitTicks = new WeakHashMap<TileWarpEjector, Long>();
     private final Random random = new Random();
     private int budget = 96;
 
     void clear() {
         sparks.clear();
+        orbitTicks.clear();
         budget = 96;
     }
 
@@ -36,7 +41,7 @@ public final class WarpParticles {
         while (iterator.hasNext()) {
             Spark spark = iterator.next();
             if (++spark.age >= spark.life) iterator.remove();
-            else {
+            else if (spark.orbit == null) {
                 spark.x += spark.vx;
                 spark.y += spark.vy;
                 spark.z += spark.vz;
@@ -47,14 +52,53 @@ public final class WarpParticles {
         }
     }
 
-    private void add(double x, double y, double z, double vx, double vy, double vz, int rgb, int life, double size) {
+    private Spark add(double x, double y, double z, double vx, double vy, double vz, int rgb, int life, double size) {
         Minecraft mc = Minecraft.getMinecraft();
         if (budget <= 0 || sparks.size() >= LIMIT
             || mc.gameSettings.particleSetting >= 2
             || mc.thePlayer == null
-            || mc.thePlayer.getDistanceSq(x, y, z) > 96 * 96) return;
+            || mc.thePlayer.getDistanceSq(x, y, z) > 96 * 96) return null;
         budget--;
-        sparks.add(new Spark(x, y, z, vx, vy, vz, rgb, life, size));
+        Spark spark = new Spark(x, y, z, vx, vy, vz, rgb, life, size);
+        sparks.add(spark);
+        return spark;
+    }
+
+    /** TESRs may run many times per frame; a node emits only once per selected world tick. */
+    void orbit(TileWarpEjector tile) {
+        Minecraft mc = Minecraft.getMinecraft();
+        if (tile.isInvalid() || tile.getWorldObj() == null
+            || tile.getWorldObj() != mc.theWorld
+            || mc.thePlayer == null
+            || mc.isGamePaused()
+            || mc.gameSettings.particleSetting >= 2) return;
+        long now = tile.getWorldObj()
+            .getTotalWorldTime();
+        // Coordinate staggering spreads many visible nodes over four ticks without per-frame emission.
+        if (((now + tile.xCoord * 31L + tile.zCoord * 17L) & 3) != 0) return;
+        Long previous = orbitTicks.get(tile);
+        if (previous != null && previous.longValue() == now) return;
+        orbitTicks.put(tile, now);
+        double x = tile.xCoord + .5;
+        double y = tile.yCoord + .5;
+        double z = tile.zCoord + .5;
+        if (mc.thePlayer.getDistanceSq(x, y, z) > 96 * 96) return;
+        // New cohorts begin at different angles, so successive gold sparks form a moving ring.
+        double phase = now * .43 + tile.xCoord * .73 + tile.zCoord * .41;
+        for (int i = 0; i < 2; i++) {
+            double angle = phase + i * Math.PI;
+            Spark spark = add(
+                x + Math.cos(angle) * .72,
+                y,
+                z + Math.sin(angle) * .72,
+                0,
+                0,
+                0,
+                i == 0 ? 0xFFD05A : 0xFFF2D9,
+                32,
+                i == 0 ? .035 : .027);
+            if (spark != null) spark.orbit = new Orbit(x, y, z, angle, i == 0 ? .16 : -.13);
+        }
     }
 
     void trail(VisualMessage message) {
@@ -187,6 +231,13 @@ public final class WarpParticles {
             double x = spark.x + spark.vx * partialTicks;
             double y = spark.y + spark.vy * partialTicks;
             double z = spark.z + spark.vz * partialTicks;
+            if (spark.orbit != null) {
+                Orbit orbit = spark.orbit;
+                double angle = orbit.phase + orbit.speed * (spark.age + partialTicks);
+                x = orbit.x + Math.cos(angle) * .72;
+                y = orbit.y + Math.sin(angle * 2) * .18;
+                z = orbit.z + Math.sin(angle) * .72;
+            }
             WarpMesh.cubeVertices(tess, x - s, y - s, z - s, x + s, y + s, z + s);
         }
         tess.draw();
@@ -198,6 +249,7 @@ public final class WarpParticles {
         private final int rgb, life;
         private final double size;
         private int age;
+        private Orbit orbit;
 
         private Spark(double x, double y, double z, double vx, double vy, double vz, int rgb, int life, double size) {
             this.x = x;
@@ -209,6 +261,19 @@ public final class WarpParticles {
             this.rgb = rgb;
             this.life = life;
             this.size = size;
+        }
+    }
+
+    private static final class Orbit {
+
+        private final double x, y, z, phase, speed;
+
+        private Orbit(double x, double y, double z, double phase, double speed) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.phase = phase;
+            this.speed = speed;
         }
     }
 }

@@ -176,7 +176,7 @@ public final class WarpService {
         long earliest = Long.MAX_VALUE;
         for (Map.Entry<String, Source> entry : sources.entrySet()) {
             Source source = entry.getValue();
-            if (source.world != player.worldObj || total <= source.settings.threshold
+            if (source.world != player.worldObj || total < source.settings.threshold
                 || player.getDistanceSq(source.x, source.y, source.z) > source.settings.range * source.settings.range)
                 continue;
             active.add(entry.getKey());
