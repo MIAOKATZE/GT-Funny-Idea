@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiIngameMenu;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.multiplayer.ServerData;
@@ -62,6 +63,8 @@ public final class ClientSmoke {
         if (event.phase != TickEvent.Phase.END || finished) return;
         Minecraft mc = Minecraft.getMinecraft();
         try {
+            mc.gameSettings.pauseOnLostFocus = false;
+            if (mc.currentScreen instanceof GuiIngameMenu) mc.displayGuiScreen(null);
             if (mc.thePlayer == null && System.nanoTime() - installedAt > startupBudget) {
                 throw new IllegalStateException(
                     "Client smoke connection timed out: " + (mc.currentScreen == null ? "no screen"
@@ -93,7 +96,11 @@ public final class ClientSmoke {
                 chat("/give " + mc.thePlayer.getCommandSenderName() + " gtfi:warp_transferer 1");
                 chat("/gtfi test camera node");
             }
-            if (ticks == 280) select(Item.getItemFromBlock(ModContent.WARP_EJECTOR));
+            if (ticks == 280) {
+                select(Item.getItemFromBlock(ModContent.WARP_EJECTOR));
+                // Avoid the vanilla DDA zero-step loop at an exactly diagonal negative-coordinate ray.
+                mc.thePlayer.rotationYaw = mc.thePlayer.prevRotationYaw = 133;
+            }
             if (ticks == 300) request("01-gold-quantum-node", false);
             if (ticks == 320) {
                 mc.playerController.onPlayerRightClick(
