@@ -96,7 +96,7 @@ final class ClientSmoke {
                 mc.thePlayer.closeScreen();
                 select(ModContent.PORTABLE_EJECTOR);
             }
-            if (ticks == 410) use(true);
+            if (ticks == 410) use(false);
             if (ticks == 450) request("03-pendant-mui", true);
             if (ticks == 480) {
                 mc.thePlayer.closeScreen();
@@ -136,6 +136,7 @@ final class ClientSmoke {
             if (ticks == 870) request("08-authoritative-transfer-particles", false);
             if (ticks == 910) request("09-authoritative-flight-trail", false);
             if (ticks == 960) {
+                chat("/gtfi test leave");
                 output.mkdirs();
                 Files.write(
                     new File(output, "complete.txt").toPath(),
