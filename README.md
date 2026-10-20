@@ -1,6 +1,6 @@
 # GT-Funny-Idea
 
-此版本客户端与服务端均需 [MIAOKATZE Core 0.1.1](https://github.com/MIAOKATZE/MIAOKATZE-Core)（兼容区间：0.1.1 ≤ 版本 < 0.2.0）。FalsePatternLib 可在缺失时补下载；已有旧版请手动更新。
+此版本客户端与服务端均需 [MIAOKATZE Core 0.1.2](https://github.com/MIAOKATZE/MIAOKATZE-Core)（兼容区间：0.1.2 ≤ 版本 < 0.2.0）。FalsePatternLib 可在缺失时补下载；已有旧版请手动更新。
 
 **邪门想法 · GTNH 扭曲玩法扩展**
 
@@ -15,3 +15,5 @@ A lightweight Thaumcraft 4 addon for GTNH 2.9.0. Eject high-warp players, carry 
 ![扭曲人弹射器蓄力中](images/ejector-charging.png)
 
 [下载 / Releases](https://github.com/MIAOKATZE/GT-Funny-Idea/releases) · [模组主页](https://miaokatze.com/)
+
+GTNH 2.9.0 RC2 is the only supported platform baseline. Older beta/RC1 packs are unsupported.
