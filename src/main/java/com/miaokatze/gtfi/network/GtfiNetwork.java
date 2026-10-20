@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.server.MinecraftServer;
 
 import com.miaokatze.gtfi.config.GtfiConfig;
@@ -21,11 +23,13 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.network.handshake.NetworkDispatcher;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import cpw.mods.fml.relauncher.Side;
+import io.netty.channel.Channel;
 
 /** Common-side protocol and bounded thread handoff. No Minecraft client classes may enter this file. */
 public final class GtfiNetwork {
@@ -132,7 +136,18 @@ public final class GtfiNetwork {
 
     /** Logout/login callbacks can outlive the connection; their state cleanup must still run. */
     private static void sendToConnected(VisualMessage message, EntityPlayerMP player) {
-        if (player.playerNetServerHandler != null) CHANNEL.sendTo(message, player);
+        if (player == null) return;
+        NetHandlerPlayServer handler = player.playerNetServerHandler;
+        if (handler == null) return;
+        NetworkManager manager = handler.netManager;
+        if (manager == null) return;
+        Channel channel = manager.channel();
+        if (channel == null || !channel.isOpen()
+            || !channel.isActive()
+            || channel.attr(NetworkDispatcher.FML_DISPATCHER)
+                .get() == null)
+            return;
+        CHANNEL.sendTo(message, player);
     }
 
     private static void sendTrail(VisualMessage message) {
