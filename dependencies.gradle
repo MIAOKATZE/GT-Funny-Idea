@@ -5,3 +5,9 @@ dependencies {
     api("thaumcraft:Thaumcraft:1.7.10-4.2.3.5:dev") { transitive = false }
     api("com.github.GTNewHorizons:Baubles-Expanded:2.2.25-GTNH:dev") { transitive = false }
 }
+
+// Shared library API; immutable candidate versions may be supplied for isolated integration builds.
+dependencies {
+    def coreVersion = project.findProperty("miaokatzeCoreVersion") ?: "0.1.7"
+    api("com.miaokatze.miaokatzecore:miaokatzecore:${coreVersion}:dev") { transitive = false }
+}
