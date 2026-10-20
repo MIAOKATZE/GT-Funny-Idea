@@ -19,7 +19,7 @@ import cpw.mods.fml.common.event.FMLServerStoppedEvent;
     modid = GTFunnyIdea.MOD_ID,
     name = GTFunnyIdea.MOD_NAME,
     version = GTFunnyIdea.VERSION,
-    dependencies = "required-after:miaokatzecore@[0.1.2,0.2.0);required-after:gregtech;required-after:modularui2@[2.3.92-1.7.10,);required-after:Thaumcraft@[4.2.3.5,);required-after:Baubles")
+    dependencies = "required-after:miaokatzecore@[0.1.3,0.2.0);required-after:gregtech;required-after:modularui2@[2.3.92-1.7.10,);required-after:Thaumcraft@[4.2.3.5,);required-after:Baubles")
 public final class GTFunnyIdea {
 
     public static final String MOD_ID = "gtfi";
