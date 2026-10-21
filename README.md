@@ -1,6 +1,6 @@
 # GT-Funny-Idea
 
-**必需前置：客户端与服务端均需 [MIAOKATZE Core 0.1.7](https://github.com/MIAOKATZE/MIAOKATZE-Core)**（兼容区间：0.1.7 ≤ 版本 < 0.2.0）。FalsePatternLib 可在缺失时补下载；已有旧版请手动更新。
+**必需前置：客户端与服务端均需 [MIAOKATZE Core 0.1.8 或更新版本](https://github.com/MIAOKATZE/MIAOKATZE-Core)**（仅要求最低版本 0.1.8，不设版本上限）。FalsePatternLib 可在缺失时补下载；已有旧版请手动更新。
 
 **邪门想法 · GTNH 扭曲玩法扩展**
 
