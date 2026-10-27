@@ -6,6 +6,7 @@ import com.miaokatze.gtfi.register.ModContent;
 import com.miaokatze.gtfi.register.ModRecipes;
 import com.miaokatze.gtfi.testlab.GtfiTestLab;
 import com.miaokatze.gtfi.ui.GtfiUI;
+import com.miaokatze.miaokatzecore.api.recipe.RecipeRegistration;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
@@ -25,7 +26,7 @@ public class CommonProxy {
         WarpService.INSTANCE.register();
         GtfiNetwork.init();
         GtfiUI.init();
-        ModRecipes.register();
+        RecipeRegistration.register("gtfi", ModRecipes::register);
     }
 
     public void postInit(FMLPostInitializationEvent event) {}
