@@ -1,12 +1,12 @@
 # GT-Funny-Idea
 
-**必需前置：客户端与服务端均需 [MIAOKATZE Core 0.1.8 或更新版本](https://github.com/MIAOKATZE/MIAOKATZE-Core)**（仅要求最低版本 0.1.8，不设版本上限）。FalsePatternLib 可在缺失时补下载；已有旧版请手动更新。
+**必需前置：客户端与服务端均需 [MIAOKATZE Core 0.2.9 或更新版本](https://github.com/MIAOKATZE/MIAOKATZE-Core)**（最低版本 0.2.9，不设版本上限）。FalsePatternLib 可在缺失时补下载；已有旧版请手动更新。
 
 **邪门想法 · GTNH 扭曲玩法扩展**
 
-A lightweight Thaumcraft 4 addon. Eject high-warp players, carry a portable ejector, and pass warp to other players.
+A lightweight Thaumcraft 4 addon targeting GTNH 2.9.0. The current 0.1.6 source compiles against the final modpack dependencies: GT5U 5.09.54.265, ModularUI2 2.3.94, Thaumcraft 4.2.3.5 and Baubles Expanded 2.2.27. Eject high-warp players, carry a portable ejector, and pass warp to other players.
 
-一个为 GTNH2.9.0 RC版本与神秘时代 4 制作的轻量模组，让扭曲多一些邪门的用途。
+一个以 GTNH 2.9.0 与神秘时代 4 为目标的轻量模组，让扭曲多一些邪门的用途。当前0.1.6源码已对齐正式版编译依赖；构建与各类实机验收分别记录，不代表已有新发布版本。
 
 - **扭曲人弹射器**：放置后检测附近玩家的扭曲，倒计时结束后将其弹飞。右键调整设置，弹射路径带有光效。
 - **便携扭曲人弹射器**：放在背包或 Baubles 吊坠槽中随身生效，并忽略持有者本人。右键设置，潜行右键开关。
@@ -16,4 +16,11 @@ A lightweight Thaumcraft 4 addon. Eject high-warp players, carry a portable ejec
 
 [下载 / Releases](https://github.com/MIAOKATZE/GT-Funny-Idea/releases) · [模组主页](https://miaokatze.com/)
 
-兼容平台：GTNH2.9.0 RC版本。
+
+## 开发入口
+
+[项目约定](AGENTS.md)说明本仓现状、约束、验证和专项技能；跨项目开发宗旨、完整新技能和审阅入口统一在[开发基线校准](../开发基线校准/README.md)。
+
+使用仓库wrapper执行 `./gradlew build --no-configuration-cache`。`check`包含纯规则、生产及实验室专服ABI、普通/测试运行包隔离与生产条目字节一致性核验。
+
+主动测试源码位于 `src/testlab`，普通包不含实验室、测试命令或客户端冒烟驱动。完整 `*-testlab.jar` 是同modid替换包，不能与普通包并装；`*-testlab-dev.jar` 仅用于开发。测试配置默认关闭，启用方式、OP2控制权限及恢复要求见[原生测试指南](plan/测试维度指南.md)。本仓保持独立测试协议；Core 0.2.9提供实体网格与统一配方注册API，测试维度仍由本Mod管理，尚未接入四核心共享宿主。

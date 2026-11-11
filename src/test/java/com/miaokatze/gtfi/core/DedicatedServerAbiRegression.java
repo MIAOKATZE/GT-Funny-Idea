@@ -104,7 +104,8 @@ public final class DedicatedServerAbiRegression {
         for (int index = 1; index < count; index++) {
             if (tags[index] == 7) {
                 String owner = (String) pool[(Integer) pool[index]];
-                if (owner.startsWith("net/minecraft/client/")) {
+                if (owner.startsWith("net/minecraft/client/")
+                    || owner.startsWith("com/miaokatze/miaokatzecore/client/")) {
                     throw new AssertionError(label + " references client class " + owner);
                 }
             }

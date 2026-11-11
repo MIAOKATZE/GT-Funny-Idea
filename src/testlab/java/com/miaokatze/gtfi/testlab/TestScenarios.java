@@ -145,6 +145,9 @@ public final class TestScenarios {
         List<Scenario> all = Arrays.<Scenario>asList(new Case("warp.read_write_conservation") {
 
             public boolean tick(Context c, int t) {
+                c.eq(new TestCommand().getRequiredPermissionLevel(), 2, "test control requires OP2");
+                c.check(!c.owner.canCommandSenderUseCommand(2, "gtfi"), "business owner remains a non-operator");
+                c.check(!c.target.canCommandSenderUseCommand(2, "gtfi"), "business target remains a non-operator");
                 for (WarpType type : WarpType.values()) {
                     c.warp(c.owner, type, 17);
                     c.eq(ThaumcraftWarp.get(c.owner, type), 17, type + " uses actual TC4 player knowledge");

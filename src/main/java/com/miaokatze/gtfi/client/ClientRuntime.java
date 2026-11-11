@@ -14,6 +14,7 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import com.miaokatze.gtfi.block.TileWarpEjector;
+import com.miaokatze.gtfi.integration.TestlabBootstrap;
 import com.miaokatze.gtfi.network.GtfiNetwork;
 import com.miaokatze.gtfi.network.VisualMessage;
 import com.miaokatze.gtfi.register.ModContent;
@@ -56,7 +57,7 @@ public final class ClientRuntime {
         MinecraftForgeClient.registerItemRenderer(ModContent.WARP_TRANSFERER, new WarpItemRenderer(true));
         MinecraftForgeClient
             .registerItemRenderer(Item.getItemFromBlock(ModContent.WARP_EJECTOR), new WarpBlockItemRenderer());
-        if (Boolean.getBoolean("gtfi.clientSmoke")) ClientSmoke.install();
+        TestlabBootstrap.installClient();
     }
 
     private void clear() {

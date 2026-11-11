@@ -107,6 +107,10 @@ public final class GtfiTestLab {
         problem = "server stopped";
     }
 
+    public static void serverStopping() {
+        if (runtime != null) runtime.restoreVisitors();
+    }
+
     public static boolean isSyntheticActor(EntityPlayer player) {
         return runtime != null && problem == null && runtime.ownsActor(player);
     }

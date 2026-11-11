@@ -12,8 +12,8 @@
       "credits": "",
       "logoFile": "",
       "screenshots": [],
-      "requiredMods": ["gregtech", "modularui2", "Thaumcraft", "Baubles"],
-      "dependencies": ["gregtech", "modularui2", "Thaumcraft", "Baubles"],
+      "requiredMods": ["miaokatzecore", "gregtech", "modularui2", "Thaumcraft", "Baubles"],
+      "dependencies": ["miaokatzecore", "gregtech", "modularui2", "Thaumcraft", "Baubles"],
       "useDependencyInformation": false
     }
   ]
