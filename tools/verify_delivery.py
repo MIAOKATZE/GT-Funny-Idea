@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Verify a clean tagged GTFI normal JAR against the actual tested normal JAR.
+"""Verify a clean tagged GTFI normal JAR, optionally against a tested normal JAR.
 
-Only the complete, independently identified build version may change. ZIP entry
+With --candidate, only the complete build version may change. ZIP entry
 timestamps/compression are immaterial; every file entry's content is inspected.
+Without --candidate the receipt proves static delivery identity only, never
+native-test equivalence. A pre-Core candidate cannot certify a Core merge.
 No Git state, source file, build output or candidate JAR is modified.
 """
 
@@ -233,7 +235,7 @@ def resolve_input(repo, value):
 def verify(args, receipt):
     repo = args.repo.resolve()
     final_path = resolve_input(repo, args.jar)
-    candidate_path = resolve_input(repo, args.candidate)
+    candidate_path = resolve_input(repo, args.candidate) if args.candidate else None
     receipt.update({"repo": str(repo), "checks": []})
     require(Path(git(repo, "rev-parse", "--show-toplevel")).resolve() == repo,
             "--repo must name the Git repository root")
@@ -255,35 +257,30 @@ def verify(args, receipt):
     require(final_path != candidate_path, "Candidate must be the separately retained tested JAR")
     receipt["checks"].append("clean Git worktree; HEAD equals release tag; filename matches")
     final, receipt["artifact"] = read_jar(final_path)
-    candidate, receipt["tested_candidate"] = read_jar(candidate_path)
+    candidate = None
+    if candidate_path:
+        candidate, receipt["tested_candidate"] = read_jar(candidate_path)
     tags_path = "com/miaokatze/gtfi/Tags.class"
-    require(tags_path in final and tags_path in candidate, "Tags.class is missing")
+    require(tags_path in final, "Tags.class is missing")
     final_tags = tag_constants(final[tags_path])
-    candidate_tags = tag_constants(candidate[tags_path])
     _, final_metadata = read_metadata(final["mcmod.info"])
-    _, candidate_metadata = read_metadata(candidate["mcmod.info"])
-    candidate_version = candidate_tags["VERSION"]
-    require(isinstance(candidate_version, str) and len(candidate_version) >= 5
-            and candidate_version.isascii() and not re.search(r"\s|\$\{", candidate_version),
-            "Invalid candidate build version")
     require(final_metadata.get("version") == final_tags["VERSION"] == tag,
             "Final metadata and Tags.VERSION must exactly match the release tag")
-    require(candidate_metadata.get("version") in (candidate_version, tag),
-            "Candidate metadata must use its legacy build version or the declared release tag")
-    require(final_tags["RELEASE_VERSION"] == candidate_tags["RELEASE_VERSION"] == release,
-            "Tags.RELEASE_VERSION must match the declared release in both JARs")
+    require(final_tags["RELEASE_VERSION"] == release,
+            "Tags.RELEASE_VERSION must match the declared release")
     require(not any(marker in final_tags["VERSION"] for marker in ("dirty", "master+")),
             "Final JAR carries a dirty or branch version")
     expected_url = "https://github.com/MIAOKATZE/GT-Funny-Idea"
     require(final_metadata.get("url") == expected_url, "Metadata URL does not reference this repository")
     require(final_metadata.get("name") == props.get("modName")
             and final_metadata.get("mcversion") == props.get("minecraftVersion"), "Metadata identity mismatch")
-    receipt.update({"metadata_url": expected_url, "candidate_build_version": candidate_version,
-                    "candidate_metadata_version": candidate_metadata.get("version"),
-                    "final_tags": final_tags, "candidate_tags": candidate_tags})
+    receipt.update({"metadata_url": expected_url, "final_tags": final_tags,
+                    "verification_scope": "static_delivery",
+                    "native_test_equivalence": "not_checked"})
     receipt["checks"].append("metadata URL/identity and actual Tags string constants")
     class_counts = {}
-    for label, entries in (("final", final), ("candidate", candidate)):
+    artifacts = [("final", final)] + ([("candidate", candidate)] if candidate else [])
+    for label, entries in artifacts:
         classes = [name for name in entries if name.endswith(".class")]
         require(classes, "No classes in " + label + " JAR")
         bad = [name for name in classes if class_pool(entries[name])[0] != 52]
@@ -291,7 +288,25 @@ def verify(args, receipt):
         class_counts[label] = len(classes)
     receipt["class_major"] = 52
     receipt["class_counts"] = class_counts
-    receipt["checks"].append("every final and candidate class uses Java 8 major 52")
+    receipt["checks"].append("every inspected class uses Java 8 major 52")
+    core_metadata_path = "META-INF/miaokatze_core_dependencies.json"
+    require(core_metadata_path in final, "Core download metadata missing")
+    core_metadata = json.loads(final[core_metadata_path], object_pairs_hook=unique_object)
+    require(core_metadata == {
+        "identifier": "falsepatternlib_dependencies",
+        "repositories": ["https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/"],
+        "modDependencies": {"obf": {"common": [{"modid": "miaokatzecore",
+            "artifact": "com.miaokatze.miaokatzecore:miaokatzecore:0.2.9"}]}}
+    }, "Unexpected Core runtime download metadata")
+    require(all("miaokatzecore" in final_metadata.get(key, [])
+                for key in ("requiredMods", "dependencies")),
+            "Core missing from mod metadata dependencies")
+    _, mod_pool, _ = class_pool(final["com/miaokatze/gtfi/GTFunnyIdea.class"])
+    require(any(entry and entry[0] == 1
+                and entry[1].startswith(b"required-after:miaokatzecore@[0.2.9,);")
+                for entry in mod_pool), "FML Core minimum version missing")
+    receipt["core_dependency"] = {"minimum_version": "0.2.9", "download_metadata": core_metadata}
+    receipt["checks"].append("Core minimum, mod metadata and FPL runtime artifact agree")
     resource_root = repo / "src/main/resources"
     resources = sorted(path for path in resource_root.rglob("*") if path.is_file())
     require(resources, "Source resources are missing")
@@ -322,16 +337,35 @@ def verify(args, receipt):
             require(final[name] == expected, "Final resource differs from source: " + name)
     receipt["resources"] = [path.relative_to(resource_root).as_posix() for path in resources]
     receipt["checks"].append("all source and required runtime resources present and source contents verified")
-    receipt["candidate_comparison"] = compare_entries(final, candidate, candidate_version, tag)
-    receipt["checks"].append("candidate ZIP contents identical except precise complete version values")
+    if candidate is not None:
+        require(tags_path in candidate, "Candidate Tags.class is missing")
+        candidate_tags = tag_constants(candidate[tags_path])
+        _, candidate_metadata = read_metadata(candidate["mcmod.info"])
+        candidate_version = candidate_tags["VERSION"]
+        require(isinstance(candidate_version, str) and len(candidate_version) >= 5
+                and candidate_version.isascii() and not re.search(r"\s|\$\{", candidate_version),
+                "Invalid candidate build version")
+        require(candidate_metadata.get("version") in (candidate_version, tag),
+                "Candidate metadata must use its build version or declared release tag")
+        require(candidate_tags["RELEASE_VERSION"] == release,
+                "Candidate declared release differs")
+        receipt.update({"candidate_build_version": candidate_version,
+                        "candidate_metadata_version": candidate_metadata.get("version"),
+                        "candidate_tags": candidate_tags})
+        receipt["candidate_comparison"] = compare_entries(final, candidate, candidate_version, tag)
+        receipt["verification_scope"] = "static_delivery_and_candidate_bytes"
+        receipt["native_test_equivalence"] = "candidate_bytes_only; verify native receipt separately"
+        receipt["checks"].append("candidate ZIP contents identical except precise complete version values")
     require(not git(repo, "status", "--porcelain=v1", "--untracked-files=all"),
             "Git worktree changed during verification")
     require(git(repo, "rev-parse", "HEAD") == head
             and git(repo, "rev-parse", "refs/tags/" + tag + "^{commit}") == tag_commit,
             "Git HEAD or release tag changed during verification")
-    require(hashlib.sha256(final_path.read_bytes()).hexdigest() == receipt["artifact"]["sha256"]
-            and hashlib.sha256(candidate_path.read_bytes()).hexdigest() == receipt["tested_candidate"]["sha256"],
-            "A JAR changed during verification")
+    require(hashlib.sha256(final_path.read_bytes()).hexdigest() == receipt["artifact"]["sha256"],
+            "Final JAR changed during verification")
+    if candidate_path:
+        require(hashlib.sha256(candidate_path.read_bytes()).hexdigest() == receipt["tested_candidate"]["sha256"],
+                "Candidate JAR changed during verification")
     receipt["checks"].append("Git identity/worktree and JAR hashes unchanged at completion")
 
 
@@ -339,7 +373,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path("."))
     parser.add_argument("--jar", type=Path, required=True, help="Final normal JAR")
-    parser.add_argument("--candidate", type=Path, required=True, help="Actual retained native-tested normal JAR")
+    parser.add_argument("--candidate", type=Path,
+                        help="Optional separately retained tested normal JAR; requires exact content equivalence")
     parser.add_argument("--receipt", type=Path, required=True)
     args = parser.parse_args(argv)
     destination = resolve_input(args.repo.resolve(), args.receipt)
@@ -350,11 +385,13 @@ def main(argv=None):
     if destination.exists():
         print("FAIL: receipt already exists; select a new output path", file=sys.stderr)
         return 1
-    protected = [resolve_input(args.repo.resolve(), args.jar), resolve_input(args.repo.resolve(), args.candidate)]
+    protected = [resolve_input(args.repo.resolve(), args.jar)]
+    if args.candidate:
+        protected.append(resolve_input(args.repo.resolve(), args.candidate))
     if destination in protected:
         print("FAIL: receipt path would overwrite an input", file=sys.stderr)
         return 1
-    receipt = {"schema": "gtfi-delivery-verification-1", "status": "FAIL",
+    receipt = {"schema": "gtfi-delivery-verification-2", "status": "FAIL",
                "verified_at_utc": datetime.now(timezone.utc).isoformat()}
     code = 1
     try:

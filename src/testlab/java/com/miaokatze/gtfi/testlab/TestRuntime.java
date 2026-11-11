@@ -31,7 +31,9 @@ import com.miaokatze.gtfi.core.ThaumcraftWarp;
 import com.miaokatze.gtfi.core.TransferService;
 import com.miaokatze.gtfi.core.WarpService;
 import com.miaokatze.gtfi.core.WarpType;
+import com.miaokatze.miaokatzecore.api.recipe.RecipeRegistration;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
@@ -57,6 +59,7 @@ public final class TestRuntime {
     private TestScenarios.Context context;
     private ForgeChunkManager.Ticket ticket;
     private final List<Map<String, Object>> fixtureDiagnostics = new ArrayList<Map<String, Object>>();
+    private final Map<String, Object> coreStartup = new LinkedHashMap<String, Object>();
 
     TestRuntime(File save, int dimension) {
         this.reportDirectory = new File(save, "gtfi-test-reports");
@@ -107,6 +110,15 @@ public final class TestRuntime {
         run.put("startedUtc", new java.util.Date().toString());
         run.put("results", results);
         run.put("artifact", artifactIdentity());
+        Map<String, Object> core = artifactIdentity(RecipeRegistration.class);
+        core.put(
+            "version",
+            Loader.instance()
+                .getIndexedModList()
+                .get("miaokatzecore")
+                .getVersion());
+        core.put("firstServerTickEnd", coreStartup);
+        run.put("core", core);
         run.put("cleanupPending", true);
         fixtureDiagnostics.clear();
         run.put("fixtureDiagnostics", fixtureDiagnostics);
@@ -146,7 +158,13 @@ public final class TestRuntime {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void tick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || "IDLE".equals(phase)) return;
+        if (event.phase != TickEvent.Phase.END) return;
+        if (coreStartup.isEmpty()) {
+            coreStartup.put("recipesComplete", RecipeRegistration.isComplete());
+            coreStartup.put("registeredIds", RecipeRegistration.registeredIds());
+            System.out.println("[GTFI-TEST] FIRST_SERVER_TICK_END Core recipes " + coreStartup);
+        }
+        if ("IDLE".equals(phase)) return;
         naturalTicks++;
         try {
             if ("VISUAL".equals(phase)) {
@@ -348,9 +366,13 @@ public final class TestRuntime {
     }
 
     private static Map<String, Object> artifactIdentity() {
+        return artifactIdentity(GTFunnyIdea.class);
+    }
+
+    private static Map<String, Object> artifactIdentity(Class<?> type) {
         Map<String, Object> identity = new LinkedHashMap<String, Object>();
         try {
-            java.net.URL source = GTFunnyIdea.class.getProtectionDomain()
+            java.net.URL source = type.getProtectionDomain()
                 .getCodeSource()
                 .getLocation();
             identity.put("codeSource", source.toExternalForm());

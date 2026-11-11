@@ -18,6 +18,7 @@ import com.miaokatze.gtfi.block.TileWarpEjector;
 import com.miaokatze.gtfi.config.GtfiConfig;
 import com.miaokatze.gtfi.register.ModContent;
 import com.miaokatze.gtfi.testlab.TestScenarios.Context;
+import com.miaokatze.miaokatzecore.api.recipe.RecipeRegistration;
 
 import gregtech.api.enums.ItemList;
 import thaumcraft.common.config.ConfigItems;
@@ -30,6 +31,11 @@ final class NativeScenarios {
         return Arrays.<TestScenarios.Scenario>asList(new TestScenarios.Case("recipes.native_crafting") {
 
             public boolean tick(Context c, int t) {
+                c.check(RecipeRegistration.isComplete(), "Core recipe pipeline completed on the native server");
+                c.check(
+                    RecipeRegistration.registeredIds()
+                        .contains("gtfi"),
+                    "Core retained gtfi callback identity");
                 List<ItemStack> circuits = OreDictionary.getOres("circuitBasic");
                 c.check(circuits.size() >= 2, "runtime LV ore dictionary offers at least two circuit variants");
                 ItemStack thaumium = OreDictionary.getOres("blockThaumium")
