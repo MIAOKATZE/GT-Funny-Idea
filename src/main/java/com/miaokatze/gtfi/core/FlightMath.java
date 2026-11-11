@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Additional terms: see AGPL-ADDITIONAL-TERMS.md in the project root.
+
 package com.miaokatze.gtfi.core;
 
 /** Unit-free continuous collision maths, also usable without a running Minecraft world. */

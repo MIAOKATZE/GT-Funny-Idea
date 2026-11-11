@@ -83,3 +83,6 @@ tasks.register<JavaExec>("runTestlabPackagingRegression") {
 }
 tasks.named("check") { dependsOn("runTestlabAbiRegression", "runTestlabPackagingRegression") }
 tasks.named("assemble") { dependsOn("reobfTestlabJar") }
+
+// Package and verify the project-specific code and independent-asset licenses.
+apply(from = "gradle/licensing.gradle.kts")

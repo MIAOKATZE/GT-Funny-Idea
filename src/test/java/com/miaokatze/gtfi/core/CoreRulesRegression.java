@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Additional terms: see AGPL-ADDITIONAL-TERMS.md in the project root.
+
 package com.miaokatze.gtfi.core;
 
 /** Run with java; these tests intentionally require no Minecraft bootstrap or mocking. */

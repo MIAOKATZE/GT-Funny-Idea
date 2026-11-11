@@ -24,3 +24,11 @@ A lightweight Thaumcraft 4 addon targeting GTNH 2.9.0. The current 0.1.6 source 
 使用仓库wrapper执行 `./gradlew build --no-configuration-cache`。`check`包含纯规则、生产及实验室专服ABI、普通/测试运行包隔离与生产条目字节一致性核验。
 
 主动测试源码位于 `src/testlab`，普通包不含实验室、测试命令或客户端冒烟驱动。完整 `*-testlab.jar` 是同modid替换包，不能与普通包并装；`*-testlab-dev.jar` 仅用于开发。测试配置默认关闭，启用方式、OP2控制权限及恢复要求见[原生测试指南](plan/测试维度指南.md)。本仓保持独立测试协议；Core 0.2.9提供实体网格与统一配方注册API，测试维度仍由本Mod管理，尚未接入四核心共享宿主。
+
+## License / 许可
+
+**Code:** [AGPLv3](LICENSE) with [reasonable additional terms](AGPL-ADDITIONAL-TERMS.md). **Designated independent assets:** [CC BY-NC-ND 4.0](ASSET-LICENSE.md). See [NOTICE](NOTICE.md) for project identity, exact scope, third-party exceptions, and independent legal-compliance duties.
+
+**代码：** AGPLv3及合理附加条款；**指定独立素材：** CC BY-NC-ND 4.0。具体范围、第三方例外和独立法律合规义务见NOTICE；既有有效授权不追溯撤回。
+
+This arrangement applies from **v0.1.7**. The two licenses cover different material; they are not alternative choices for the same material.
