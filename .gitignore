@@ -2,7 +2,15 @@
 /build/
 /run/
 /plan/
-/[Tt]ools/
+/Tools/
+!/tools/
+/tools/*
+!/tools/README.md
+!/tools/verify_delivery.py
+!/tools/testlab/
+/tools/testlab/*
+!/tools/testlab/prepare_instance.py
+!/tools/testlab/run_server.py
 /docs/
 /.idea/
 /.vscode/

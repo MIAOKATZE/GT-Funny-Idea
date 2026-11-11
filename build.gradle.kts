@@ -40,3 +40,46 @@ tasks.register<JavaExec>("runDedicatedServerAbiRegression") {
 tasks.named("check") {
     dependsOn("runCoreRulesRegression", "runDedicatedServerAbiRegression")
 }
+
+// Complete replacement variant; production jars never include active test fixtures.
+val testlabSourceSet = sourceSets.create("testlab") {
+    compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
+    runtimeClasspath += output + compileClasspath + sourceSets.main.get().runtimeClasspath
+}
+configurations.named(testlabSourceSet.implementationConfigurationName) { extendsFrom(configurations.implementation.get()) }
+configurations.named(testlabSourceSet.compileOnlyConfigurationName) { extendsFrom(configurations.compileOnly.get()) }
+val testlabJar = tasks.register<Jar>("testlabJar") {
+    group = "build"
+    description = "Complete opt-in testlab replacement; install instead of the ordinary jar."
+    archiveClassifier.set("testlab-dev")
+    with(tasks.jar.get())
+    from(testlabSourceSet.output)
+    manifest.from(tasks.jar.get().manifest)
+    manifest.attributes("GTFI-Testlab-Variant" to "replacement")
+}
+tasks.named<com.gtnewhorizons.retrofuturagradle.mcp.ReobfuscatedJar>("reobfTestlabJar") {
+    archiveClassifier.set("testlab")
+    referenceClasspath.from(testlabSourceSet.compileClasspath)
+    val productionReobf = tasks.named<com.gtnewhorizons.retrofuturagradle.mcp.ReobfuscatedJar>("reobfJar")
+    extraSrgFiles.from(productionReobf.map { it.extraSrgFiles })
+    extraSrgEntries.addAll(productionReobf.flatMap { it.extraSrgEntries })
+}
+tasks.register<JavaExec>("runTestlabAbiRegression") {
+    group = "verification"
+    mainClass = "com.miaokatze.gtfi.core.DedicatedServerAbiRegression"
+    classpath = sourceSets.test.get().runtimeClasspath
+    dependsOn(testlabSourceSet.classesTaskName)
+    args(testlabSourceSet.output.classesDirs.singleFile.absolutePath)
+}
+tasks.register<JavaExec>("runTestlabPackagingRegression") {
+    group = "verification"
+    description = "Checks active fixture isolation and byte-identical production entries in the replacement jar."
+    mainClass = "com.miaokatze.gtfi.core.TestlabPackagingRegression"
+    classpath = sourceSets.test.get().runtimeClasspath
+    val normal = tasks.named<com.gtnewhorizons.retrofuturagradle.mcp.ReobfuscatedJar>("reobfJar")
+    val replacement = tasks.named<com.gtnewhorizons.retrofuturagradle.mcp.ReobfuscatedJar>("reobfTestlabJar")
+    dependsOn(normal, replacement)
+    doFirst { setArgs(listOf(normal.get().archiveFile.get().asFile.absolutePath, replacement.get().archiveFile.get().asFile.absolutePath)) }
+}
+tasks.named("check") { dependsOn("runTestlabAbiRegression", "runTestlabPackagingRegression") }
+tasks.named("assemble") { dependsOn("reobfTestlabJar") }

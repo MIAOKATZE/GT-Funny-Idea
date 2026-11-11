@@ -6,7 +6,7 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.ChatComponentText;
 
-/** OP4/console entry. Every world mutation is delegated to the bounded fixture runtime. */
+/** OP2/console control entry. Business actors keep their own permissions. */
 final class TestCommand extends CommandBase {
 
     @Override
@@ -16,7 +16,7 @@ final class TestCommand extends CommandBase {
 
     @Override
     public int getRequiredPermissionLevel() {
-        return 4;
+        return 2;
     }
 
     @Override

@@ -8,7 +8,7 @@ import net.minecraftforge.common.config.Configuration;
 public final class GtfiConfig {
 
     public static boolean safeMode = false;
-    public static boolean testDimensionEnabled = true;
+    public static boolean testDimensionEnabled = false;
     public static int testDimensionId = 22970;
 
     private GtfiConfig() {}
@@ -25,8 +25,8 @@ public final class GtfiConfig {
         testDimensionEnabled = config.getBoolean(
             "enabled",
             "testDimension",
-            true,
-            "Register the isolated test dimension and its operator commands. Requires restart.");
+            false,
+            "Opt in to the isolated test dimension. Requires the complete testlab replacement JAR on both sides and a restart.");
         testDimensionId = config.getInt(
             "dimensionId",
             "testDimension",

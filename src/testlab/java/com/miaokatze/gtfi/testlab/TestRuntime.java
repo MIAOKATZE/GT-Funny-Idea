@@ -106,6 +106,8 @@ public final class TestRuntime {
         run.put("selector", selector);
         run.put("startedUtc", new java.util.Date().toString());
         run.put("results", results);
+        run.put("artifact", artifactIdentity());
+        run.put("cleanupPending", true);
         fixtureDiagnostics.clear();
         run.put("fixtureDiagnostics", fixtureDiagnostics);
         naturalTicks = 0;
@@ -270,10 +272,11 @@ public final class TestRuntime {
         run.put(
             "impactObservation",
             "FakePlayer refuses damage: reports actual production damage requests, not client health/death");
-        writeReport();
         releaseTicket();
         queue = null;
         phase = "IDLE";
+        run.put("cleanupPending", actors != null || ticket != null || !returns.isEmpty());
+        writeReport();
         System.out.println("[GTFI-TEST] COMPLETE " + run.get("status") + " " + reportPath);
     }
 
@@ -312,6 +315,7 @@ public final class TestRuntime {
         releaseTicket();
         if (run != null && !"IDLE".equals(phase)) {
             run.put("status", "STOPPED");
+            run.put("cleanupPending", !returns.isEmpty());
             writeReport();
         }
         queue = null;
@@ -322,6 +326,55 @@ public final class TestRuntime {
 
     void close() {
         stop();
+    }
+
+    void restoreVisitors() {
+        // Stop while the server still has live worlds and connections, before its normal player save.
+        stop();
+        List players = new ArrayList(
+            MinecraftServer.getServer()
+                .getConfigurationManager().playerEntityList);
+        for (Object object : players) {
+            EntityPlayerMP player = (EntityPlayerMP) object;
+            if (returns.containsKey(player.getUniqueID()) || player.getEntityData()
+                .hasKey("GtfiTestReturn")) {
+                try {
+                    leave(player);
+                } catch (Exception failure) {
+                    GTFunnyIdea.LOG.error("Test visitor restoration pending for {}", player.getUniqueID(), failure);
+                }
+            }
+        }
+    }
+
+    private static Map<String, Object> artifactIdentity() {
+        Map<String, Object> identity = new LinkedHashMap<String, Object>();
+        try {
+            java.net.URL source = GTFunnyIdea.class.getProtectionDomain()
+                .getCodeSource()
+                .getLocation();
+            identity.put("codeSource", source.toExternalForm());
+            // Forge's LaunchClassLoader may expose the class entry's jar: URL as its CodeSource.
+            java.net.URL archive = "jar".equals(source.getProtocol())
+                ? ((java.net.JarURLConnection) source.openConnection()).getJarFileURL()
+                : source;
+            identity.put("archiveSource", archive.toExternalForm());
+            File jar = new File(archive.toURI());
+            if (jar.isFile()) {
+                java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+                try (java.io.InputStream input = Files.newInputStream(jar.toPath())) {
+                    byte[] buffer = new byte[8192];
+                    int length;
+                    while ((length = input.read(buffer)) != -1) digest.update(buffer, 0, length);
+                }
+                StringBuilder hash = new StringBuilder();
+                for (byte value : digest.digest()) hash.append(String.format("%02x", value & 255));
+                identity.put("sha256", hash.toString());
+            }
+        } catch (Exception failure) {
+            identity.put("error", failure.toString());
+        }
+        return identity;
     }
 
     private void releaseTicket() {
@@ -366,24 +419,38 @@ public final class TestRuntime {
         idleRequired();
         if (!built) throw new IllegalStateException("Build the test area first");
         if (player.dimension == dimension) throw new IllegalStateException("Already in test dimension");
-        returns.put(player.getUniqueID(), new ReturnPosition(player));
+        if (player.getEntityData()
+            .hasKey("GtfiTestReturn"))
+            throw new IllegalStateException("Previous return recovery pending; use leave first");
+        ReturnPosition position = new ReturnPosition(player);
+        returns.put(player.getUniqueID(), position);
+        player.getEntityData()
+            .setTag("GtfiTestReturn", position.toNbt());
         transfer(player, GtfiTestLab.world(), 0.5, 65, 0.5, player.rotationYaw, player.rotationPitch);
         return "Entered dedicated test area";
     }
 
     String leave(EntityPlayerMP player) {
         ReturnPosition position = returns.get(player.getUniqueID());
+        if (position == null && player.getEntityData()
+            .hasKey("GtfiTestReturn"))
+            position = new ReturnPosition(
+                player.getEntityData()
+                    .getCompoundTag("GtfiTestReturn"));
         if (position == null) throw new IllegalStateException("No return position recorded for this player");
         restorePreview(player);
         WorldServer target = MinecraftServer.getServer()
             .worldServerForDimension(position.dimension);
         transfer(player, target, position.x, position.y, position.z, position.yaw, position.pitch);
         returns.remove(player.getUniqueID());
+        player.getEntityData()
+            .removeTag("GtfiTestReturn");
         return "Returned to original dimension and position";
     }
 
     String camera(EntityPlayerMP player, String pose) {
-        if (!player.canCommandSenderUseCommand(4, "gtfi")) throw new IllegalStateException("Camera requires OP4");
+        idleRequired();
+        if (!player.canCommandSenderUseCommand(2, "gtfi")) throw new IllegalStateException("Camera requires OP2");
         if (player.dimension != dimension || !(player.worldObj.provider instanceof TestWorldProvider))
             throw new IllegalStateException("Camera requires the dedicated test dimension");
         if (player.playerNetServerHandler == null)
@@ -504,6 +571,26 @@ public final class TestRuntime {
             z = player.posZ;
             yaw = player.rotationYaw;
             pitch = player.rotationPitch;
+        }
+
+        ReturnPosition(NBTTagCompound tag) {
+            dimension = tag.getInteger("dimension");
+            x = tag.getDouble("x");
+            y = tag.getDouble("y");
+            z = tag.getDouble("z");
+            yaw = tag.getFloat("yaw");
+            pitch = tag.getFloat("pitch");
+        }
+
+        NBTTagCompound toNbt() {
+            NBTTagCompound tag = new NBTTagCompound();
+            tag.setInteger("dimension", dimension);
+            tag.setDouble("x", x);
+            tag.setDouble("y", y);
+            tag.setDouble("z", z);
+            tag.setFloat("yaw", yaw);
+            tag.setFloat("pitch", pitch);
+            return tag;
         }
     }
 }

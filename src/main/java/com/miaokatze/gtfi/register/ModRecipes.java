@@ -13,7 +13,7 @@ public final class ModRecipes {
     private ModRecipes() {}
 
     public static void register() {
-        // GT205's Basic circuit tier is LV; ore matching accepts every circuit of that tier.
+        // Basic circuit tier is LV; ore matching accepts every circuit of that tier.
         GameRegistry.addRecipe(
             new ShapedOreRecipe(
                 new ItemStack(ModContent.WARP_EJECTOR),

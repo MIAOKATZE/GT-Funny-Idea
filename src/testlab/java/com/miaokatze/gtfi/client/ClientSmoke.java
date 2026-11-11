@@ -13,6 +13,7 @@ import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.network.play.client.C0BPacketEntityAction;
 import net.minecraft.util.MovingObjectPosition;
@@ -51,8 +52,12 @@ public final class ClientSmoke {
     private String capture;
     private boolean requireMui;
     private int chargingUntil;
+    private NBTTagList originalInventory;
+    private int originalDimension;
+    private boolean originalPauseOnLostFocus;
+    private boolean optionsCaptured;
 
-    static void install() {
+    public static void install() {
         FMLCommonHandler.instance()
             .bus()
             .register(new ClientSmoke());
@@ -63,6 +68,10 @@ public final class ClientSmoke {
         if (event.phase != TickEvent.Phase.END || finished) return;
         Minecraft mc = Minecraft.getMinecraft();
         try {
+            if (!optionsCaptured) {
+                originalPauseOnLostFocus = mc.gameSettings.pauseOnLostFocus;
+                optionsCaptured = true;
+            }
             mc.gameSettings.pauseOnLostFocus = false;
             if (mc.currentScreen instanceof GuiIngameMenu) mc.displayGuiScreen(null);
             if (mc.thePlayer == null && System.nanoTime() - installedAt > startupBudget) {
@@ -87,13 +96,14 @@ public final class ClientSmoke {
             }
             if (mc.thePlayer == null || mc.theWorld == null) return;
             ticks++;
-            if (ticks == 60) chat("/gtfi test build");
+            if (ticks == 60) {
+                originalInventory = mc.thePlayer.inventory.writeToNBT(new NBTTagList());
+                originalDimension = mc.thePlayer.dimension;
+                chat("/gtfi test build");
+            }
             if (ticks == 200) chat("/gtfi test enter");
             if (ticks == 250) {
-                chat("/gamemode 1");
-                chat("/give " + mc.thePlayer.getCommandSenderName() + " gtfi:warp_ejector 1");
-                chat("/give " + mc.thePlayer.getCommandSenderName() + " gtfi:portable_ejector 1");
-                chat("/give " + mc.thePlayer.getCommandSenderName() + " gtfi:warp_transferer 1");
+                chat("/gtfi test preview");
                 chat("/gtfi test camera node");
             }
             if (ticks == 280) {
@@ -186,8 +196,12 @@ public final class ClientSmoke {
             }
             if (ticks == 870) request("08-authoritative-transfer-particles", false);
             if (ticks == 910) request("09-authoritative-flight-trail", false);
-            if (ticks == 960) {
-                chat("/gtfi test leave");
+            if (ticks == 960) chat("/gtfi test leave");
+            if (ticks == 1000) {
+                if (mc.thePlayer.dimension != originalDimension
+                    || !originalInventory.equals(mc.thePlayer.inventory.writeToNBT(new NBTTagList())))
+                    throw new IllegalStateException("Return/inventory restoration not acknowledged; recovery pending");
+                mc.gameSettings.pauseOnLostFocus = originalPauseOnLostFocus;
                 output.mkdirs();
                 Files.write(
                     new File(output, "complete.txt").toPath(),
@@ -362,6 +376,14 @@ public final class ClientSmoke {
 
     private void fail(Exception error) {
         finished = true;
+        Minecraft mc = Minecraft.getMinecraft();
+        if (optionsCaptured) mc.gameSettings.pauseOnLostFocus = originalPauseOnLostFocus;
+        if (mc.thePlayer != null) {
+            KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+            GtfiNetwork.sendAlt(false);
+            mc.playerController.onStoppedUsingItem(mc.thePlayer);
+            chat("/gtfi test leave");
+        }
         GTFunnyIdea.LOG.error("[GTFI-CLIENT-SMOKE] FAILED", error);
         try {
             output.mkdirs();

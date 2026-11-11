@@ -18,8 +18,8 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
 
 import com.miaokatze.gtfi.config.GtfiConfig;
+import com.miaokatze.gtfi.integration.TestlabBootstrap;
 import com.miaokatze.gtfi.register.ModContent;
-import com.miaokatze.gtfi.testlab.GtfiTestLab;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.Event;
@@ -199,7 +199,7 @@ public final class TransferService {
             EntityPlayerMP other = (EntityPlayerMP) object;
             if (!other.isEntityAlive() || other.isDead
                 || other.dimension != player.dimension
-                || other instanceof FakePlayer && !GtfiTestLab.isSyntheticActor(other)) continue;
+                || other instanceof FakePlayer && !TestlabBootstrap.isSyntheticActor(other)) continue;
             AxisAlignedBB box = other.boundingBox.expand(0.1, 0.1, 0.1);
             MovingObjectPosition hit = box.calculateIntercept(eye, end);
             double distance = box.isVecInside(eye) ? 0

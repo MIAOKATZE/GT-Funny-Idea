@@ -13,13 +13,14 @@ import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import cpw.mods.fml.common.event.FMLServerStoppedEvent;
+import cpw.mods.fml.common.event.FMLServerStoppingEvent;
 
 /** GT-Funny-Idea lifecycle entry point. */
 @Mod(
     modid = GTFunnyIdea.MOD_ID,
     name = GTFunnyIdea.MOD_NAME,
     version = GTFunnyIdea.VERSION,
-    dependencies = "required-after:gregtech;required-after:modularui2@[2.3.92-1.7.10,);required-after:Thaumcraft@[4.2.3.5,);required-after:Baubles")
+    dependencies = "required-after:gregtech@[5.09.54.265,);required-after:modularui2@[2.3.94-1.7.10,);required-after:Thaumcraft@[4.2.3.5,);required-after:Baubles@[2.2.27-GTNH,)")
 public final class GTFunnyIdea {
 
     public static final String MOD_ID = "gtfi";
@@ -54,6 +55,11 @@ public final class GTFunnyIdea {
     @Mod.EventHandler
     public void serverStarting(FMLServerStartingEvent event) {
         proxy.serverStarting(event);
+    }
+
+    @Mod.EventHandler
+    public void serverStopping(FMLServerStoppingEvent event) {
+        proxy.serverStopping(event);
     }
 
     @Mod.EventHandler
